@@ -4,6 +4,19 @@ using UnityEngine;
 
 public class NPCManager : Singleton<NPCManager> {
 
+    #region Enums
+
+    public enum Relationship
+    {
+        Stranger = 0,
+        Acquaintance = 1,
+        Friend = 2,
+        ReceivingEncouragement = 3,
+        CloseFriend = 4,
+    }
+
+    #endregion
+
     #region Fields
 
     [SerializeField]

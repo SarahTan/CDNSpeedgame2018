@@ -1,10 +1,15 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Relationship = NPCManager.Relationship;
 
 public class NPC : MonoBehaviour {
 
     #region Fields
+
+    // Debug
+    [SerializeField]
+    private SpriteRenderer spriteRenderer;
 
     [SerializeField]
     private Rigidbody2D rb;
@@ -27,6 +32,8 @@ public class NPC : MonoBehaviour {
     
     private Quaternion targetRotation = Quaternion.identity;
 
+    private StateMachine stateMachine = new StateMachine();
+
     #endregion
 
     #region Properties
@@ -45,8 +52,15 @@ public class NPC : MonoBehaviour {
 
     #region Unity Lifecycle
 
-    private void Start()
+    private void Awake()
     {
+        // Add all the states to the state machine
+        stateMachine.AddState((int)Relationship.Stranger, null, null, null);
+        stateMachine.AddState((int)Relationship.Acquaintance, null, null, null);
+        stateMachine.AddState((int)Relationship.Friend, null, null, null);
+        stateMachine.AddState((int)Relationship.ReceivingEncouragement, null, null, null);
+        stateMachine.AddState((int)Relationship.CloseFriend, null, null, null);
+
         // Initialize the NPC with random values so it behaves differently fromt other NPCs
         transform.rotation = GetRandom2DRotation();
         nextDirectionChangeTime = GetNextDirectionChangeTime();
@@ -55,6 +69,13 @@ public class NPC : MonoBehaviour {
         currentSpeed = Random.Range(minSpeed, maxSpeed);
     }
 
+    private void Start()
+    {
+        // Initialize the state machine
+        stateMachine.Initialize((int)Relationship.Stranger);
+    }
+
+    // All physics calculations should always be done in FixedUpdate
     private void FixedUpdate()
     {
         transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, Time.deltaTime* rotationalSpeed);
@@ -64,6 +85,26 @@ public class NPC : MonoBehaviour {
         {
             targetRotation = GetRandom2DRotation();
             nextDirectionChangeTime = GetNextDirectionChangeTime();
+        }
+    }
+
+    private void Update()
+    {
+        stateMachine.Update();
+    }
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.gameObject == Player.Instance.gameObject)
+        {
+            // Colliding with the player as a stranger triggers a state change to acquaintance
+            if (stateMachine.CurrentStateId == (int)Relationship.Stranger)
+            {
+                stateMachine.EnterState((int)Relationship.Acquaintance);
+                
+                // Debug
+                spriteRenderer.color = Color.black;
+            }
         }
     }
 
