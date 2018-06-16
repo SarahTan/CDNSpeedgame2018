@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class NPC : MonoBehaviour {
 
+    #region Fields
+
     [SerializeField]
     private Rigidbody2D rb;
 
@@ -25,6 +27,8 @@ public class NPC : MonoBehaviour {
     
     private Quaternion targetRotation = Quaternion.identity;
 
+    #endregion
+
     #region Properties
 
     private Vector2 Position2D
@@ -39,16 +43,22 @@ public class NPC : MonoBehaviour {
 
     #endregion
 
+    #region Unity Lifecycle
+
     private void Start()
     {
+        // Initialize the NPC with random values so it behaves differently fromt other NPCs
         transform.rotation = GetRandom2DRotation();
         nextDirectionChangeTime = GetNextDirectionChangeTime();
+
+        // TODO: Change speed randomly throughout the game?
+        currentSpeed = Random.Range(minSpeed, maxSpeed);
     }
 
     private void FixedUpdate()
     {
         transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, Time.deltaTime* rotationalSpeed);
-        rb.MovePosition(Position2D + Right2D * maxSpeed * Time.deltaTime); 
+        rb.MovePosition(Position2D + (Right2D * currentSpeed * Time.deltaTime)); 
 
         if (Time.time > nextDirectionChangeTime)
         {
@@ -56,6 +66,8 @@ public class NPC : MonoBehaviour {
             nextDirectionChangeTime = GetNextDirectionChangeTime();
         }
     }
+
+    #endregion
 
     #region Helpers
 
@@ -66,6 +78,7 @@ public class NPC : MonoBehaviour {
 
     public Quaternion GetRandom2DRotation()
     {
+        // TODO: Don't completely randomize it, factor in the edges of the screen and player position too
         return Quaternion.Euler(new Vector3(0f, 0f, Random.Range(0f, 360f)));
     }
 
