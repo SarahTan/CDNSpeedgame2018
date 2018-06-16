@@ -76,7 +76,7 @@ public class StateMachine
         State state = null;
         if (stateId != INVALID_STATE_ID)
         {
-            if(states.TryGetValue(stateId, out state))
+            if(!states.TryGetValue(stateId, out state))
             {
                 UnityEngine.Debug.LogError("Missing stateId " + stateId);
             }
