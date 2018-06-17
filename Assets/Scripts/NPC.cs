@@ -7,13 +7,15 @@ public class NPC : MonoBehaviour {
 
     #region Fields
 
-    // Debug
+    [Header("References")]
     [SerializeField]
     private SpriteRenderer spriteRenderer;
-
     [SerializeField]
     private Rigidbody2D rb;
+    [SerializeField]
+    private TextMesh textMesh;
 
+    [Header("Movement Variables")]
     [SerializeField]
     private float minSpeed;
     [SerializeField]
@@ -26,11 +28,26 @@ public class NPC : MonoBehaviour {
     private float minTimeBeforeDirectionChange;
     [SerializeField]
     private float maxTimeBeforeDirectionChange;
+    
+    [Header("States")]
+    [SerializeField]
+    private float minTimeBeforeFriendTransition;
+    [SerializeField]
+    private float maxTimeBeforeFriendTransition;
+
+    [SerializeField]
+    private float receivingEncouragementStateDuration;
+
+    [SerializeField]
+    private KeyCode[] keys = new KeyCode[0];
 
     private float currentSpeed;
     private float nextDirectionChangeTime;
-    
     private Quaternion targetRotation = Quaternion.identity;
+
+    private float nextStateTransitionTime;
+
+    private KeyCode associatedKey;
 
     private StateMachine stateMachine = new StateMachine();
 
@@ -56,10 +73,10 @@ public class NPC : MonoBehaviour {
     {
         // Add all the states to the state machine
         stateMachine.AddState((int)Relationship.Stranger, null, null, null);
-        stateMachine.AddState((int)Relationship.Acquaintance, null, null, null);
-        stateMachine.AddState((int)Relationship.Friend, null, null, null);
-        stateMachine.AddState((int)Relationship.ReceivingEncouragement, null, null, null);
-        stateMachine.AddState((int)Relationship.CloseFriend, null, null, null);
+        stateMachine.AddState((int)Relationship.Acquaintance, OnEnterAcquaintanceState, null, OnUpdateAcquaintanceState);
+        stateMachine.AddState((int)Relationship.Friend, OnEnterFriendState, null, null);
+        stateMachine.AddState((int)Relationship.ReceivingEncouragement, OnEnterReceivingEncourgaementState, null, OnUpdateReceivingEncourgaementState);
+        stateMachine.AddState((int)Relationship.CloseFriend, OnEnterCloseFriendState, null, null);
 
         // Initialize the NPC with random values so it behaves differently fromt other NPCs
         transform.rotation = GetRandom2DRotation();
@@ -100,12 +117,71 @@ public class NPC : MonoBehaviour {
             // Colliding with the player as a stranger triggers a state change to acquaintance
             if (stateMachine.CurrentStateId == (int)Relationship.Stranger)
             {
-                stateMachine.EnterState((int)Relationship.Acquaintance);
-                
-                // Debug
-                spriteRenderer.color = Color.black;
+                stateMachine.EnterState((int)Relationship.Acquaintance);                
+            }
+            else if(stateMachine.CurrentStateId == (int)Relationship.Friend)
+            {
+                // Don't use OnCollisionStay for this, since there will be a wrong action mechanic in future
+                if (Input.GetKey(associatedKey))
+                {
+                    stateMachine.EnterState((int)Relationship.ReceivingEncouragement);
+                }
             }
         }
+    }
+    
+    #endregion
+
+    #region States
+
+    private void OnEnterAcquaintanceState(int previousStateId)
+    {
+        // Debug
+        spriteRenderer.color = Color.black;
+
+        nextStateTransitionTime = Time.time + Random.Range(minTimeBeforeFriendTransition, maxTimeBeforeFriendTransition);
+    }
+
+    private void OnUpdateAcquaintanceState()
+    {
+        if(Time.time > nextStateTransitionTime)
+        {
+            stateMachine.EnterState((int)Relationship.Friend);
+        }
+    }
+
+    private void OnEnterFriendState(int previousStateId)
+    {
+        // Debug
+        spriteRenderer.color = Color.yellow;
+
+        associatedKey = keys[Random.Range(0, keys.Length)];
+        textMesh.text = associatedKey.ToString();
+    }
+
+    private void OnEnterReceivingEncourgaementState(int previousStateId)
+    {
+        // Debug
+        spriteRenderer.color = Color.blue;
+
+        textMesh.text = string.Empty;
+        nextStateTransitionTime = Time.time + receivingEncouragementStateDuration;
+    }
+
+    private void OnUpdateReceivingEncourgaementState()
+    {
+        if (Time.time > nextStateTransitionTime)
+        {
+            stateMachine.EnterState((int)Relationship.CloseFriend);
+        }
+    }
+
+    private void OnEnterCloseFriendState(int previousStateId)
+    {
+        // Debug
+        spriteRenderer.color = Color.green;
+
+        // TODO: Move out of screen
     }
 
     #endregion

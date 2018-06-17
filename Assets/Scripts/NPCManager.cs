@@ -58,6 +58,9 @@ public class NPCManager : Singleton<NPCManager> {
             npc.transform.position = GetRandomPositionOnScreen();
             npc.transform.parent = transform;
             allNPCs.Add(npc);
+#if UNITY_EDITOR
+            npc.gameObject.name += allNPCs.Count;
+#endif
         }
     }
 
