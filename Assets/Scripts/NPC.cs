@@ -5,6 +5,12 @@ using Relationship = NPCManager.Relationship;
 
 public class NPC : MonoBehaviour {
 
+    #region Events
+
+    public static System.Action<NPC> EnterInactiveStateEvent = null;
+
+    #endregion
+
     #region Fields
 
     [Header("References")]
@@ -38,30 +44,37 @@ public class NPC : MonoBehaviour {
     [SerializeField]
     private KeyCode[] keys = new KeyCode[0];
 
-    private Vector2 currentDirection;
-    private float currentSpeed;
-    private float nextDirectionChangeTime;
+    private Vector2 currentDirection = Vector2.zero;
+    private float currentSpeed = 0f;
+    private float nextDirectionChangeTime = 0f;
 
-    private float nextStateTransitionTime;
+    private float nextStateTransitionTime = 0f;
 
-    private KeyCode associatedKey;
+    private KeyCode associatedKey = KeyCode.None;
 
     private bool shouldFollowPlayer = false;
 
     private StateMachine stateMachine = new StateMachine();
 
+    public bool IsActive = false;
+
     #endregion
 
     #region Properties
 
-    private Vector2 Position2D
+    // Cache the main camera for perf reasons since we need to access it every frame
+    // Unity calls Object.FindObjectWithTag("MainCamera") *every single time* you access Camera.main, which is ridiculous
+    private Camera _mainCamera = null;
+    private Camera MainCamera
     {
-        get { return new Vector2(transform.position.x, transform.position.y); }
-    }
-
-    private Vector2 Right2D
-    {
-        get { return new Vector2(transform.right.x, transform.right.y); }
+        get
+        {
+            if (_mainCamera == null)
+            {
+                _mainCamera = Camera.main;
+            }
+            return _mainCamera;
+        }
     }
 
     #endregion
@@ -71,22 +84,15 @@ public class NPC : MonoBehaviour {
     private void Awake()
     {
         // Add all the states to the state machine
-        stateMachine.AddState((int)Relationship.Stranger, null, null, null);
+        stateMachine.AddState((int)Relationship.Stranger, OnEnterStrangerState, null, null);
         stateMachine.AddState((int)Relationship.Acquaintance, OnEnterAcquaintanceState, null, OnUpdateAcquaintanceState);
         stateMachine.AddState((int)Relationship.Friend, OnEnterFriendState, null, null);
         stateMachine.AddState((int)Relationship.ReceivingEncouragement, OnEnterReceivingEncourgaementState, null, OnUpdateReceivingEncourgaementState);
         stateMachine.AddState((int)Relationship.CloseFriend, OnEnterCloseFriendState, null, null);
+        stateMachine.AddState((int)Relationship.Inactive, OnEnterInactiveState, null, null);
 
-        // Initialize the NPC with random values so it behaves differently fromt other NPCs
-        nextDirectionChangeTime = GetNextDirectionChangeTime();
-        currentSpeed = Random.Range(minSpeed, maxSpeed);
-    }
-
-    private void Start()
-    {
-        // Initialize the state machine
-        stateMachine.Initialize((int)Relationship.Stranger);
-        currentDirection = GetRandomUnitVector();
+        // Immediately deactivate it
+        stateMachine.Initialize((int)Relationship.Inactive);
     }
 
     // All physics calculations should always be done in FixedUpdate
@@ -96,7 +102,7 @@ public class NPC : MonoBehaviour {
         if (Time.time > nextDirectionChangeTime)
         {
             currentSpeed = Random.Range(minSpeed, maxSpeed);
-            currentDirection = GetRandomUnitVector();
+            currentDirection = UnityExtensions.GetRandomUnitVector();
             nextDirectionChangeTime = GetNextDirectionChangeTime();
         }
 
@@ -113,6 +119,14 @@ public class NPC : MonoBehaviour {
             {
                 shouldFollowPlayer = true;
                 rb.AddForce((currentDirection) * currentSpeed);
+            }
+        }
+        else if (stateMachine.CurrentStateId == (int)Relationship.CloseFriend)
+        {
+            // Deactivate the NPC once it's no longer visible
+            if (!MainCamera.IsObjectVisible(spriteRenderer.bounds))
+            {
+                stateMachine.EnterState((int)Relationship.Inactive);
             }
         }
         else
@@ -151,10 +165,31 @@ public class NPC : MonoBehaviour {
             }
         }
     }
-   
+
     #endregion
 
     #region States
+
+    public void Activate()
+    {
+        stateMachine.EnterState((int)Relationship.Stranger);
+    }
+
+    private void OnEnterStrangerState(int previousStateId)
+    {
+        if (previousStateId == (int)Relationship.Inactive)
+        {
+            gameObject.SetActive(true);
+
+            // Give the NPC with random values so it behaves differently fromt other NPCs
+            nextDirectionChangeTime = GetNextDirectionChangeTime();
+            currentDirection = UnityExtensions.GetRandomUnitVector();
+            currentSpeed = Random.Range(minSpeed, maxSpeed);
+
+            // Debug
+            spriteRenderer.color = Color.white;
+        }
+    }
 
     private void OnEnterAcquaintanceState(int previousStateId)
     {
@@ -203,7 +238,14 @@ public class NPC : MonoBehaviour {
         // Debug
         spriteRenderer.color = Color.green;
 
-        // TODO: Move out of screen
+        // Don't change the direction anymore so it will leave the screen
+        nextDirectionChangeTime = float.MaxValue;
+    }
+    
+    private void OnEnterInactiveState(int previousStateId)
+    {
+        gameObject.SetActive(false);
+        EnterInactiveStateEvent.SafeRaise(this);
     }
 
     #endregion
@@ -213,12 +255,6 @@ public class NPC : MonoBehaviour {
     private float GetNextDirectionChangeTime()
     {
         return Time.time + Random.Range(minTimeBeforeDirectionChange, maxTimeBeforeDirectionChange);
-    }
-    
-    public Vector2 GetRandomUnitVector()
-    {
-        float angleRadians = Random.Range(0, Mathf.PI * 2);
-        return new Vector2(Mathf.Sin(angleRadians), Mathf.Cos(angleRadians));
     }
 
     #endregion
