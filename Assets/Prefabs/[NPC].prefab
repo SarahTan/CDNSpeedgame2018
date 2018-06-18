@@ -127,7 +127,7 @@ Rigidbody2D:
   m_Interpolate: 1
   m_SleepingMode: 1
   m_CollisionDetection: 0
-  m_Constraints: 0
+  m_Constraints: 4
 --- !u!58 &58371913375194832
 CircleCollider2D:
   m_ObjectHideFlags: 1
@@ -178,13 +178,12 @@ MonoBehaviour:
   spriteRenderer: {fileID: 212235829089213010}
   rb: {fileID: 50884619153566204}
   textMesh: {fileID: 102365874845503142}
-  minSpeed: 2
-  maxSpeed: 5
-  rotationalSpeed: 70
+  minSpeed: 3
+  maxSpeed: 6
   minTimeBeforeDirectionChange: 0.5
   maxTimeBeforeDirectionChange: 3
   minTimeBeforeFriendTransition: 2
-  maxTimeBeforeFriendTransition: 10
+  maxTimeBeforeFriendTransition: 8
   receivingEncouragementStateDuration: 1
   keys: 710000007700000065000000
 --- !u!212 &212235829089213010

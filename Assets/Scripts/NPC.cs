@@ -22,9 +22,6 @@ public class NPC : MonoBehaviour {
     private float maxSpeed;
     
     [SerializeField]
-    private float rotationalSpeed;
-
-    [SerializeField]
     private float minTimeBeforeDirectionChange;
     [SerializeField]
     private float maxTimeBeforeDirectionChange;
@@ -41,13 +38,15 @@ public class NPC : MonoBehaviour {
     [SerializeField]
     private KeyCode[] keys = new KeyCode[0];
 
+    private Vector2 currentDirection;
     private float currentSpeed;
     private float nextDirectionChangeTime;
-    private Quaternion targetRotation = Quaternion.identity;
 
     private float nextStateTransitionTime;
 
     private KeyCode associatedKey;
+
+    private bool shouldFollowPlayer = false;
 
     private StateMachine stateMachine = new StateMachine();
 
@@ -79,10 +78,7 @@ public class NPC : MonoBehaviour {
         stateMachine.AddState((int)Relationship.CloseFriend, OnEnterCloseFriendState, null, null);
 
         // Initialize the NPC with random values so it behaves differently fromt other NPCs
-        transform.rotation = GetRandom2DRotation();
         nextDirectionChangeTime = GetNextDirectionChangeTime();
-
-        // TODO: Change speed randomly throughout the game?
         currentSpeed = Random.Range(minSpeed, maxSpeed);
     }
 
@@ -90,18 +86,44 @@ public class NPC : MonoBehaviour {
     {
         // Initialize the state machine
         stateMachine.Initialize((int)Relationship.Stranger);
+        currentDirection = GetRandomUnitVector();
     }
 
     // All physics calculations should always be done in FixedUpdate
     private void FixedUpdate()
     {
-        transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, Time.deltaTime* rotationalSpeed);
-        rb.MovePosition(Position2D + (Right2D * currentSpeed * Time.deltaTime)); 
-
+        // Get the new direction
         if (Time.time > nextDirectionChangeTime)
         {
-            targetRotation = GetRandom2DRotation();
+            currentSpeed = Random.Range(minSpeed, maxSpeed);
+            currentDirection = GetRandomUnitVector();
             nextDirectionChangeTime = GetNextDirectionChangeTime();
+        }
+
+        // Add a force to the NPC to move it
+        if(stateMachine.CurrentStateId == (int)Relationship.Friend)
+        {
+            // Friends should tend towards the player
+            if (shouldFollowPlayer)
+            {
+                shouldFollowPlayer = false;
+                rb.AddForce((Player.Instance.transform.position - transform.position).normalized * currentSpeed);
+            }
+            else
+            {
+                shouldFollowPlayer = true;
+                rb.AddForce((currentDirection) * currentSpeed);
+            }
+        }
+        else
+        {
+            rb.AddForce((currentDirection) * currentSpeed);
+        }
+
+        // Clamp the velocity
+        if(rb.velocity.sqrMagnitude > maxSpeed * maxSpeed)
+        {
+            rb.velocity = Vector2.ClampMagnitude(rb.velocity, maxSpeed);
         }
     }
 
@@ -129,7 +151,7 @@ public class NPC : MonoBehaviour {
             }
         }
     }
-    
+   
     #endregion
 
     #region States
@@ -192,11 +214,11 @@ public class NPC : MonoBehaviour {
     {
         return Time.time + Random.Range(minTimeBeforeDirectionChange, maxTimeBeforeDirectionChange);
     }
-
-    public Quaternion GetRandom2DRotation()
+    
+    public Vector2 GetRandomUnitVector()
     {
-        // TODO: Don't completely randomize it, factor in the edges of the screen and player position too
-        return Quaternion.Euler(new Vector3(0f, 0f, Random.Range(0f, 360f)));
+        float angleRadians = Random.Range(0, Mathf.PI * 2);
+        return new Vector2(Mathf.Sin(angleRadians), Mathf.Cos(angleRadians));
     }
 
     #endregion
