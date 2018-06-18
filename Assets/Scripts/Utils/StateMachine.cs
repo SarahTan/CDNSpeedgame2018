@@ -99,8 +99,12 @@ public class StateMachine
             currentState.OnExit(nextStateId);
         }
 
+        // Update the current and previous states
+        PreviousStateId = CurrentStateId;
+        CurrentStateId = nextStateId;
+
         // Enter the next state
-        State nextState = GetState(nextStateId);
+        State nextState = GetState(CurrentStateId);
         if (nextState != null)
         {
             // Cache the OnUpdate method so we don't have to keep getting it
@@ -118,15 +122,11 @@ public class StateMachine
             // Clear the cached OnUpdate which might have been set for the previous state
             cachedStateOnUpdate = null;
         }
-
-        // Update the current and previous states
-        PreviousStateId = CurrentStateId;
-        CurrentStateId = nextStateId;
-                
+                        
         // Broadcast the state change
         if (StateChangeEvent != null)
         {
-            StateChangeEvent(nextStateId, PreviousStateId);
+            StateChangeEvent(CurrentStateId, PreviousStateId);
         }
     }
     
