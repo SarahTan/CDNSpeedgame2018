@@ -1,13 +1,14 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using Relationship = NPCManager.Relationship;
+using Relationship = GameManager.Relationship;
 
 public class NPC : MonoBehaviour {
 
     #region Events
 
     public static System.Action<NPC> EnterInactiveStateEvent = null;
+    public static System.Action<NPC> EnterCloseFriendStateEvent = null;
 
     #endregion
 
@@ -240,6 +241,8 @@ public class NPC : MonoBehaviour {
 
         // Don't change the direction anymore so it will leave the screen
         nextDirectionChangeTime = float.MaxValue;
+
+        EnterCloseFriendStateEvent.SafeRaise(this);
     }
     
     private void OnEnterInactiveState(int previousStateId)

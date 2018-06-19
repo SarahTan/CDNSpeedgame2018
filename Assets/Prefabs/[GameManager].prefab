@@ -36,7 +36,7 @@ GameObject:
   - component: {fileID: 4253788677338396}
   - component: {fileID: 114787812204727748}
   m_Layer: 0
-  m_Name: '[NPCManager]'
+  m_Name: '[GameManager]'
   m_TagString: Untagged
   m_Icon: {fileID: 5721338939258241955, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
@@ -109,9 +109,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6e76ef7eaccc01440baa122ed582f745, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxNumberOfActiveNPCs: 30
   NPCPrefab: {fileID: 114124410792829302, guid: c9e2dc8381a28144986da7350e340383,
     type: 2}
+  scoreText: {fileID: 0}
+  maxNumberOfActiveNPCs: 30
   NPCSpawnFrequency: 1
   spawningRectMin: {fileID: 4934560494920722}
   spawningRectMax: {fileID: 4196251064975916}
+  closeFriendPoints: 0

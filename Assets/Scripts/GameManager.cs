@@ -1,8 +1,9 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
-public class NPCManager : Singleton<NPCManager>
+public class GameManager : Singleton<GameManager>
 {
 
     #region Enums
@@ -20,20 +21,35 @@ public class NPCManager : Singleton<NPCManager>
     #endregion
 
     #region Fields
-    
-    [SerializeField]
-    private int maxNumberOfActiveNPCs;
+
+    #region References
+
     [SerializeField]
     private NPC NPCPrefab;
 
     [SerializeField]
-    private float NPCSpawnFrequency;
+    private Text scoreText;
 
+    #endregion
+
+    #region Tunables
+
+    [SerializeField]
+    private int maxNumberOfActiveNPCs;
+    
     [Header("Spawning")]
+    [SerializeField]
+    private float NPCSpawnFrequency;
     [SerializeField]
     private Transform spawningRectMin;
     [SerializeField]
     private Transform spawningRectMax;
+
+    [Header("Scoring")]
+    [SerializeField]
+    private int closeFriendPoints;
+
+    #endregion
 
     private Rect spawningRect;
 
@@ -43,6 +59,21 @@ public class NPCManager : Singleton<NPCManager>
     #endregion
 
     #region Properties
+
+    private int _currentScore = 0;
+    private int CurrentScore
+    {
+        get { return _currentScore; }
+        set
+        {
+            if(value != CurrentScore)
+            {
+                _currentScore = value;
+                scoreText.text = string.Format("Current score: {0}", CurrentScore);
+            }
+        }
+    }
+
 
     // Cache the main camera for perf reasons since we need to access it every frame
     // Unity calls Object.FindObjectWithTag("MainCamera") *every single time* you access Camera.main, which is ridiculous
@@ -82,11 +113,19 @@ public class NPCManager : Singleton<NPCManager>
 #endif
         }
 
-        // Listen for NPC deactivation events
+        // Listen for NPC events
         NPC.EnterInactiveStateEvent += OnNPCEnterInactiveState;
+        NPC.EnterCloseFriendStateEvent += OnNPCEnterCloseFriendState;
 
+        StartGame();
+    }
+
+    private void StartGame()
+    {       
         // Start the spawning corouting
         StartCoroutine(RunSpawnNPC());
+
+        CurrentScore = 0;
     }
 
     protected override void OnDestroy()
@@ -94,9 +133,23 @@ public class NPCManager : Singleton<NPCManager>
         base.OnDestroy();
 
         NPC.EnterInactiveStateEvent -= OnNPCEnterInactiveState;
+        NPC.EnterCloseFriendStateEvent -= OnNPCEnterCloseFriendState;
     }
 
     #endregion
+
+    private void OnNPCEnterCloseFriendState(NPC npc)
+    {
+        // Try to move the NPC from the active to inactive list
+        if (activeNPCs.Contains(npc))
+        {
+            CurrentScore += closeFriendPoints;
+        }
+        else
+        {
+            Debug.LogError(string.Format("{0} not found in activeNPC list!", npc.name));
+        }
+    }
 
     private void OnNPCEnterInactiveState(NPC npc)
     {
@@ -127,7 +180,7 @@ public class NPCManager : Singleton<NPCManager>
     }
 
     #region Helpers
-
+    
     private Vector2 GetRandomSpawnPoint()
     {
         var value = Random.value;
