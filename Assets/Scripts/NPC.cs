@@ -21,6 +21,8 @@ public class NPC : MonoBehaviour {
     private Rigidbody2D rb;
     [SerializeField]
     private TextMesh textMesh;
+    [SerializeField]
+    private GameObject aoe;
 
     [Header("Movement Variables")]
     [SerializeField]
@@ -57,7 +59,7 @@ public class NPC : MonoBehaviour {
 
     private StateMachine stateMachine = new StateMachine();
 
-    public bool IsActive = false;
+    private Vector2 savedVelocity = Vector2.zero;
 
     #endregion
 
@@ -88,7 +90,7 @@ public class NPC : MonoBehaviour {
         stateMachine.AddState((int)Relationship.Stranger, OnEnterStrangerState, null, null);
         stateMachine.AddState((int)Relationship.Acquaintance, OnEnterAcquaintanceState, null, OnUpdateAcquaintanceState);
         stateMachine.AddState((int)Relationship.Friend, OnEnterFriendState, OnExitFriendState, null);
-        stateMachine.AddState((int)Relationship.ReceivingEncouragement, OnEnterReceivingEncourgaementState, null, OnUpdateReceivingEncourgaementState);
+        stateMachine.AddState((int)Relationship.ReceivingEncouragement, OnEnterReceivingEncourgaementState, OnExitReceivingEncourgaementState, OnUpdateReceivingEncourgaementState);
         stateMachine.AddState((int)Relationship.CloseFriend, OnEnterCloseFriendState, null, null);
         stateMachine.AddState((int)Relationship.Inactive, OnEnterInactiveState, null, null);
 
@@ -130,7 +132,7 @@ public class NPC : MonoBehaviour {
                 stateMachine.EnterState((int)Relationship.Inactive);
             }
         }
-        else
+        else if(stateMachine.CurrentStateId != (int)Relationship.ReceivingEncouragement)
         {
             rb.AddForce((currentDirection) * currentSpeed);
         }
@@ -167,9 +169,27 @@ public class NPC : MonoBehaviour {
         }
     }
 
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        var npc = collision.GetComponent<NPC>();
+        if (npc != null)
+        {
+            npc.ChainReaction();
+        }
+    }
+
     #endregion
 
     #region States
+
+    private void ChainReaction()
+    {
+        // Stranger, Aquaintance, Friend
+        if(stateMachine.CurrentStateId <= 2)
+        {
+            stateMachine.EnterState(stateMachine.CurrentStateId + 1);
+        }
+    }
 
     public void Activate()
     {
@@ -232,8 +252,13 @@ public class NPC : MonoBehaviour {
         // Debug
         spriteRenderer.color = Color.blue;
 
-        textMesh.text = string.Empty;
+        // NPC pauses in place while receiving encouragement
+        savedVelocity = rb.velocity;
+        rb.velocity = Vector2.zero;
+        rb.isKinematic = true;
+
         nextStateTransitionTime = Time.time + receivingEncouragementStateDuration;
+        aoe.SetActive(true);
     }
 
     private void OnUpdateReceivingEncourgaementState()
@@ -242,6 +267,13 @@ public class NPC : MonoBehaviour {
         {
             stateMachine.EnterState((int)Relationship.CloseFriend);
         }
+    }
+
+    private void OnExitReceivingEncourgaementState(int previousStateId)
+    {
+        rb.isKinematic = false;
+        rb.velocity = savedVelocity;
+        aoe.SetActive(false);
     }
 
     private void OnEnterCloseFriendState(int previousStateId)
@@ -257,7 +289,11 @@ public class NPC : MonoBehaviour {
     
     private void OnEnterInactiveState(int previousStateId)
     {
+        // Reset everything
         gameObject.SetActive(false);
+        textMesh.text = string.Empty;
+        aoe.SetActive(false);
+
         EnterInactiveStateEvent.SafeRaise(this);
     }
 
