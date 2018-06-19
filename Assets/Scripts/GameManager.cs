@@ -18,6 +18,13 @@ public class GameManager : Singleton<GameManager>
         Inactive = 5
     }
 
+    public enum GameState
+    {
+        PreGame = 0,
+        GameRunning = 1,
+        PostGame = 2
+    }
+
     #endregion
 
     #region Fields
@@ -65,6 +72,8 @@ public class GameManager : Singleton<GameManager>
     private List<NPC> inactiveNPCs = new List<NPC>();    
     private List<NPC> activeNPCs = new List<NPC>();
 
+    private StateMachine stateMachine = new StateMachine();
+
     #endregion
 
     #region Properties
@@ -81,7 +90,7 @@ public class GameManager : Singleton<GameManager>
 
                 if (value >= pointsToWin)
                 {
-                    EndGame(true);
+                    stateMachine.EnterState((int)GameState.PostGame);
                 }
                 else
                 {
@@ -113,6 +122,10 @@ public class GameManager : Singleton<GameManager>
 
     private void Awake()
     {
+        stateMachine.AddState((int)GameState.PreGame, null, null, null);
+        stateMachine.AddState((int)GameState.GameRunning, OnEnterGameRunningState, null, null);
+        stateMachine.AddState((int)GameState.PostGame, OnEnterPostGameState, null, null);
+
         // Set up the spawning rect
         if (spawningRectMin != null && spawningRectMin != null)
         {
@@ -134,10 +147,10 @@ public class GameManager : Singleton<GameManager>
         NPC.EnterInactiveStateEvent += OnNPCEnterInactiveState;
         NPC.EnterCloseFriendStateEvent += OnNPCEnterCloseFriendState;
 
-        StartGame();
+        stateMachine.EnterState((int)GameState.GameRunning);
     }
 
-    private void StartGame()
+    private void OnEnterGameRunningState(int previousState)
     {
         gameOverScreen.SetActive(false);
 
@@ -147,7 +160,7 @@ public class GameManager : Singleton<GameManager>
         CurrentScore = 0;
     }
 
-    private void EndGame(bool win)
+    private void OnEnterPostGameState(int previousState)
     {
         while(activeNPCs.Last() != null)
         {
@@ -197,7 +210,7 @@ public class GameManager : Singleton<GameManager>
 
     private IEnumerator RunSpawnNPC()
     {
-        while (true)
+        while (stateMachine.CurrentStateId == (int)GameState.GameRunning)
         {
             if (activeNPCs.Count < maxNumberOfActiveNPCs && inactiveNPCs.Count > 0)
             {
@@ -214,7 +227,7 @@ public class GameManager : Singleton<GameManager>
 
     public void Button_PlayAgain()
     {
-        StartGame();
+        stateMachine.EnterState((int)GameState.GameRunning);
     }
 
     #endregion
