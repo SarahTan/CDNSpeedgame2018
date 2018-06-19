@@ -30,6 +30,13 @@ public class GameManager : Singleton<GameManager>
     [SerializeField]
     private Text scoreText;
 
+    [SerializeField]
+    private GameObject gameOverScreen;
+    [SerializeField]
+    private Text gameOverText;
+    [SerializeField]
+    private Text yourScoreText;
+
     #endregion
 
     #region Tunables
@@ -48,6 +55,8 @@ public class GameManager : Singleton<GameManager>
     [Header("Scoring")]
     [SerializeField]
     private int closeFriendPoints;
+    [SerializeField]
+    private int pointsToWin;
 
     #endregion
 
@@ -60,7 +69,7 @@ public class GameManager : Singleton<GameManager>
 
     #region Properties
 
-    private int _currentScore = 0;
+    private int _currentScore = -1;
     private int CurrentScore
     {
         get { return _currentScore; }
@@ -69,7 +78,15 @@ public class GameManager : Singleton<GameManager>
             if(value != CurrentScore)
             {
                 _currentScore = value;
-                scoreText.text = string.Format("Current score: {0}", CurrentScore);
+
+                if (value >= pointsToWin)
+                {
+                    EndGame(true);
+                }
+                else
+                {
+                    scoreText.text = string.Format("Current score: {0}", CurrentScore);
+                }
             }
         }
     }
@@ -121,11 +138,25 @@ public class GameManager : Singleton<GameManager>
     }
 
     private void StartGame()
-    {       
+    {
+        gameOverScreen.SetActive(false);
+
         // Start the spawning corouting
         StartCoroutine(RunSpawnNPC());
 
         CurrentScore = 0;
+    }
+
+    private void EndGame(bool win)
+    {
+        while(activeNPCs.Last() != null)
+        {
+            activeNPCs.Last().Deactivate();
+        }
+
+        gameOverScreen.SetActive(true);
+        gameOverText.text = "You Win!";
+        yourScoreText.text = string.Format("Your Score: {0}", CurrentScore);
     }
 
     protected override void OnDestroy()
@@ -179,8 +210,17 @@ public class GameManager : Singleton<GameManager>
         }
     }
 
+    #region Buttons
+
+    public void Button_PlayAgain()
+    {
+        StartGame();
+    }
+
+    #endregion
+
     #region Helpers
-    
+
     private Vector2 GetRandomSpawnPoint()
     {
         var value = Random.value;

@@ -87,7 +87,7 @@ public class NPC : MonoBehaviour {
         // Add all the states to the state machine
         stateMachine.AddState((int)Relationship.Stranger, OnEnterStrangerState, null, null);
         stateMachine.AddState((int)Relationship.Acquaintance, OnEnterAcquaintanceState, null, OnUpdateAcquaintanceState);
-        stateMachine.AddState((int)Relationship.Friend, OnEnterFriendState, null, null);
+        stateMachine.AddState((int)Relationship.Friend, OnEnterFriendState, OnExitFriendState, null);
         stateMachine.AddState((int)Relationship.ReceivingEncouragement, OnEnterReceivingEncourgaementState, null, OnUpdateReceivingEncourgaementState);
         stateMachine.AddState((int)Relationship.CloseFriend, OnEnterCloseFriendState, null, null);
         stateMachine.AddState((int)Relationship.Inactive, OnEnterInactiveState, null, null);
@@ -176,6 +176,11 @@ public class NPC : MonoBehaviour {
         stateMachine.EnterState((int)Relationship.Stranger);
     }
 
+    public void Deactivate()
+    {
+        stateMachine.EnterState((int)Relationship.Inactive);
+    }
+
     private void OnEnterStrangerState(int previousStateId)
     {
         if (previousStateId == (int)Relationship.Inactive)
@@ -215,6 +220,11 @@ public class NPC : MonoBehaviour {
 
         associatedKey = keys[Random.Range(0, keys.Length)];
         textMesh.text = associatedKey.ToString();
+    }
+
+    private void OnExitFriendState(int previousStateId)
+    {
+        textMesh.text = string.Empty;
     }
 
     private void OnEnterReceivingEncourgaementState(int previousStateId)

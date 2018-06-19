@@ -112,8 +112,12 @@ MonoBehaviour:
   NPCPrefab: {fileID: 114124410792829302, guid: c9e2dc8381a28144986da7350e340383,
     type: 2}
   scoreText: {fileID: 0}
+  gameOverScreen: {fileID: 0}
+  gameOverText: {fileID: 0}
+  yourScoreText: {fileID: 0}
   maxNumberOfActiveNPCs: 30
   NPCSpawnFrequency: 1
   spawningRectMin: {fileID: 4934560494920722}
   spawningRectMax: {fileID: 4196251064975916}
-  closeFriendPoints: 0
+  closeFriendPoints: 1
+  pointsToWin: 10

@@ -39,4 +39,13 @@ public static class UnityExtensions {
             action(obj);
         }
     }
+
+    public static T Last<T>(this List<T> list)
+    {
+        if(list != null && list.Count > 0)
+        {
+            return list[list.Count - 1];
+        }
+        return default(T);
+    }
 }
