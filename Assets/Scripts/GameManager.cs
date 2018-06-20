@@ -62,6 +62,8 @@ public class GameManager : Singleton<GameManager>
     [SerializeField]
     private int closeFriendEnergy;
     [SerializeField]
+    private int wrongActionEnergy;
+    [SerializeField]
     private int energyToWin;
     [SerializeField]
     private float energyDrainRate;
@@ -151,6 +153,7 @@ public class GameManager : Singleton<GameManager>
         // Listen for NPC events
         NPC.EnterInactiveStateEvent += OnNPCEnterInactiveState;
         NPC.EnterCloseFriendStateEvent += OnNPCEnterCloseFriendState;
+        NPC.WrongActionEvent += OnNPCWrongAction;
 
         stateMachine.EnterState((int)GameState.GameRunning);
     }
@@ -193,13 +196,25 @@ public class GameManager : Singleton<GameManager>
 
         NPC.EnterInactiveStateEvent -= OnNPCEnterInactiveState;
         NPC.EnterCloseFriendStateEvent -= OnNPCEnterCloseFriendState;
+        NPC.WrongActionEvent += OnNPCWrongAction;
     }
 
     #endregion
 
+    private void OnNPCWrongAction(NPC npc)
+    {
+        if (activeNPCs.Contains(npc))
+        {
+            CurrentEnergy -= Mathf.Abs(wrongActionEnergy);
+        }
+        else
+        {
+            Debug.LogError(string.Format("{0} not found in activeNPC list!", npc.name));
+        }
+    }
+
     private void OnNPCEnterCloseFriendState(NPC npc)
     {
-        // Try to move the NPC from the active to inactive list
         if (activeNPCs.Contains(npc))
         {
             CurrentEnergy += closeFriendEnergy;

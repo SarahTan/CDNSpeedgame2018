@@ -9,6 +9,7 @@ public class NPC : MonoBehaviour {
 
     public static System.Action<NPC> EnterInactiveStateEvent = null;
     public static System.Action<NPC> EnterCloseFriendStateEvent = null;
+    public static System.Action<NPC> WrongActionEvent = null;
 
     #endregion
 
@@ -126,6 +127,9 @@ public class NPC : MonoBehaviour {
         }
         else if (stateMachine.CurrentStateId == (int)Relationship.CloseFriend)
         {
+            // Use max speed as we want it to quickly get out of the screen to be recycled
+            rb.AddForce((currentDirection) * maxSpeed);
+
             // Deactivate the NPC once it's no longer visible
             if (!MainCamera.IsObjectVisible(spriteRenderer.bounds))
             {
@@ -160,10 +164,17 @@ public class NPC : MonoBehaviour {
             }
             else if(stateMachine.CurrentStateId == (int)Relationship.Friend)
             {
-                // Don't use OnCollisionStay for this, since there will be a wrong action mechanic in future
-                if (Input.GetKey(associatedKey))
+                if (Input.anyKey)
                 {
-                    stateMachine.EnterState((int)Relationship.ReceivingEncouragement);
+                    if (Input.GetKey(associatedKey))
+                    {
+                        stateMachine.EnterState((int)Relationship.ReceivingEncouragement);
+                    }
+                    else
+                    {
+                        WrongActionEvent.SafeRaise(this);
+                        stateMachine.EnterState((int)Relationship.Acquaintance);
+                    }
                 }
             }
         }
@@ -272,7 +283,11 @@ public class NPC : MonoBehaviour {
     private void OnExitReceivingEncourgaementState(int previousStateId)
     {
         rb.isKinematic = false;
-        rb.velocity = savedVelocity;
+
+        // Set to max speed because:
+        // 1. Velocity magnitude might be close to 0 and will take awhile to increase back up
+        // 2. We want the NPC to quickly exit the screen and get recycled
+        rb.velocity = savedVelocity.normalized*maxSpeed;
         aoe.SetActive(false);
     }
 
