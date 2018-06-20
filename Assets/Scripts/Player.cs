@@ -13,6 +13,8 @@ public class Player : Singleton<Player> {
 
     #region Properties
 
+    public bool IsRecharging { get; private set; }
+
     // Cache the main camera for perf reasons since we need to access it every frame
     // Unity calls Object.FindObjectWithTag("MainCamera") *every single time* you access Camera.main, which is ridiculous
     private Camera _mainCamera = null;
@@ -43,5 +45,21 @@ public class Player : Singleton<Player> {
     private void Update()
     {
         transform.position = Vector2.Lerp(transform.position, TargetPosition, Time.deltaTime * maxSpeed);
+    }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.gameObject.CompareTag("RechargingArea"))
+        {
+            IsRecharging = true;
+        }
+    }
+
+    private void OnTriggerExit2D(Collider2D collision)
+    {
+        if (collision.gameObject.CompareTag("RechargingArea"))
+        {
+            IsRecharging = false;
+        }
     }
 }

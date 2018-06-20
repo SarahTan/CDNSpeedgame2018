@@ -114,10 +114,12 @@ MonoBehaviour:
   scoreText: {fileID: 0}
   gameOverScreen: {fileID: 0}
   gameOverText: {fileID: 0}
-  yourScoreText: {fileID: 0}
   maxNumberOfActiveNPCs: 50
   NPCSpawnFrequency: 0.5
   spawningRectMin: {fileID: 4934560494920722}
   spawningRectMax: {fileID: 4196251064975916}
   closeFriendPoints: 1
-  pointsToWin: 50
+  pointsToWin: 100
+  energyDrainRate: 0.5
+  energyGainRate: 10
+  startingEnergy: 50

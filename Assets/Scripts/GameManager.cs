@@ -41,8 +41,6 @@ public class GameManager : Singleton<GameManager>
     private GameObject gameOverScreen;
     [SerializeField]
     private Text gameOverText;
-    [SerializeField]
-    private Text yourScoreText;
 
     #endregion
 
@@ -64,6 +62,12 @@ public class GameManager : Singleton<GameManager>
     private int closeFriendPoints;
     [SerializeField]
     private int pointsToWin;
+    [SerializeField]
+    private float energyDrainRate;
+    [SerializeField]
+    private float energyGainRate;
+    [SerializeField]
+    private float startingEnergy;
 
     #endregion
 
@@ -78,23 +82,23 @@ public class GameManager : Singleton<GameManager>
 
     #region Properties
 
-    private int _currentScore = -1;
-    private int CurrentScore
+    private float _currentEnergy = -1;
+    private float CurrentEnergy
     {
-        get { return _currentScore; }
+        get { return _currentEnergy; }
         set
         {
-            if(value != CurrentScore)
+            if(value != CurrentEnergy)
             {
-                _currentScore = value;
+                _currentEnergy = value;
 
-                if (value >= pointsToWin)
+                if (value > pointsToWin || value < 1)
                 {
                     stateMachine.EnterState((int)GameState.PostGame);
                 }
                 else
                 {
-                    scoreText.text = string.Format("Current score: {0}", CurrentScore);
+                    scoreText.text = string.Format("Energy: {0}", Mathf.FloorToInt(CurrentEnergy));
                 }
             }
         }
@@ -152,12 +156,15 @@ public class GameManager : Singleton<GameManager>
 
     private void OnEnterGameRunningState(int previousState)
     {
+        CurrentEnergy = startingEnergy;
+
         gameOverScreen.SetActive(false);
 
         // Start the spawning corouting
         StartCoroutine(RunSpawnNPC());
 
-        CurrentScore = 0;
+        // Start draining the energy
+        StartCoroutine(RunCalculateEnergy());
     }
 
     private void OnEnterPostGameState(int previousState)
@@ -168,8 +175,15 @@ public class GameManager : Singleton<GameManager>
         }
 
         gameOverScreen.SetActive(true);
-        gameOverText.text = "You Win!";
-        yourScoreText.text = string.Format("Your Score: {0}", CurrentScore);
+
+        if (CurrentEnergy >= pointsToWin)
+        {
+            gameOverText.text = "You Win!";
+        }
+        else
+        {
+            gameOverText.text = "You Lose :(";
+        }
     }
 
     protected override void OnDestroy()
@@ -187,7 +201,7 @@ public class GameManager : Singleton<GameManager>
         // Try to move the NPC from the active to inactive list
         if (activeNPCs.Contains(npc))
         {
-            CurrentScore += closeFriendPoints;
+            CurrentEnergy += closeFriendPoints;
         }
         else
         {
@@ -205,6 +219,26 @@ public class GameManager : Singleton<GameManager>
         else
         {
             Debug.LogError(string.Format("{0} not found in activeNPC list!", npc.name));
+        }
+    }
+
+    private IEnumerator RunCalculateEnergy()
+    {
+        while (stateMachine.CurrentStateId == (int)GameState.GameRunning)
+        {
+            if (Player.Instance.IsRecharging && CurrentEnergy < startingEnergy)
+            {
+                CurrentEnergy += (energyGainRate / 10f);
+                yield return new WaitForSeconds(0.1f);
+            }
+            else
+            {
+                if (!Player.Instance.IsRecharging)
+                {
+                    CurrentEnergy -= energyDrainRate;
+                }
+                yield return new WaitForSeconds(1f);
+            }
         }
     }
 
