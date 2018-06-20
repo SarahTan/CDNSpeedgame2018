@@ -47,7 +47,7 @@ public class Player : Singleton<Player> {
         transform.position = Vector2.Lerp(transform.position, TargetPosition, Time.deltaTime * maxSpeed);
     }
 
-    private void OnTriggerEnter2D(Collider2D collision)
+    private void OnCollisionEnter2D(Collision2D collision)
     {
         if (collision.gameObject.CompareTag("RechargingArea"))
         {
@@ -55,7 +55,7 @@ public class Player : Singleton<Player> {
         }
     }
 
-    private void OnTriggerExit2D(Collider2D collision)
+    private void OnCollisionExit2D(Collision2D collision)
     {
         if (collision.gameObject.CompareTag("RechargingArea"))
         {

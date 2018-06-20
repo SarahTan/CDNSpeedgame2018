@@ -31,11 +31,12 @@ public class GameManager : Singleton<GameManager>
 
     #region References
 
+    [Header("References")]
     [SerializeField]
     private NPC NPCPrefab;
 
     [SerializeField]
-    private Text scoreText;
+    private Slider energyBar;
 
     [SerializeField]
     private GameObject gameOverScreen;
@@ -57,11 +58,11 @@ public class GameManager : Singleton<GameManager>
     [SerializeField]
     private Transform spawningRectMax;
 
-    [Header("Scoring")]
+    [Header("Energy")]
     [SerializeField]
-    private int closeFriendPoints;
+    private int closeFriendEnergy;
     [SerializeField]
-    private int pointsToWin;
+    private int energyToWin;
     [SerializeField]
     private float energyDrainRate;
     [SerializeField]
@@ -92,13 +93,13 @@ public class GameManager : Singleton<GameManager>
             {
                 _currentEnergy = value;
 
-                if (value > pointsToWin || value < 1)
+                if (value > energyToWin || value < 1)
                 {
                     stateMachine.EnterState((int)GameState.PostGame);
                 }
                 else
                 {
-                    scoreText.text = string.Format("Energy: {0}", Mathf.FloorToInt(CurrentEnergy));
+                    energyBar.normalizedValue = value / energyToWin;
                 }
             }
         }
@@ -176,7 +177,7 @@ public class GameManager : Singleton<GameManager>
 
         gameOverScreen.SetActive(true);
 
-        if (CurrentEnergy >= pointsToWin)
+        if (CurrentEnergy >= energyToWin)
         {
             gameOverText.text = "You Win!";
         }
@@ -201,7 +202,7 @@ public class GameManager : Singleton<GameManager>
         // Try to move the NPC from the active to inactive list
         if (activeNPCs.Contains(npc))
         {
-            CurrentEnergy += closeFriendPoints;
+            CurrentEnergy += closeFriendEnergy;
         }
         else
         {
@@ -229,16 +230,12 @@ public class GameManager : Singleton<GameManager>
             if (Player.Instance.IsRecharging && CurrentEnergy < startingEnergy)
             {
                 CurrentEnergy += (energyGainRate / 10f);
-                yield return new WaitForSeconds(0.1f);
             }
-            else
+            else if (!Player.Instance.IsRecharging)
             {
-                if (!Player.Instance.IsRecharging)
-                {
-                    CurrentEnergy -= energyDrainRate;
-                }
-                yield return new WaitForSeconds(1f);
+                CurrentEnergy -= (energyDrainRate / 10f);
             }
+            yield return new WaitForSeconds(0.1f);
         }
     }
 

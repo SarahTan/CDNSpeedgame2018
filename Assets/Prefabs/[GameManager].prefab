@@ -111,15 +111,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   NPCPrefab: {fileID: 114124410792829302, guid: c9e2dc8381a28144986da7350e340383,
     type: 2}
-  scoreText: {fileID: 0}
+  healthBar: {fileID: 0}
   gameOverScreen: {fileID: 0}
   gameOverText: {fileID: 0}
   maxNumberOfActiveNPCs: 50
   NPCSpawnFrequency: 0.5
   spawningRectMin: {fileID: 4934560494920722}
   spawningRectMax: {fileID: 4196251064975916}
-  closeFriendPoints: 1
-  pointsToWin: 100
-  energyDrainRate: 0.5
+  closeFriendEnergy: 1
+  energyToWin: 100
+  energyDrainRate: 1
   energyGainRate: 10
   startingEnergy: 50
