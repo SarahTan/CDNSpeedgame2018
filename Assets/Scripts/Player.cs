@@ -50,17 +50,17 @@ public class Player : Singleton<Player> {
         rb.MovePosition(Vector2.Lerp(transform.position, TargetPosition, Time.deltaTime * maxSpeed));
     }
 
-    private void OnCollisionEnter2D(Collision2D collision)
+    private void OnTriggerEnter2D(Collider2D collider)
     {
-        if (collision.gameObject.CompareTag("RechargingArea"))
+        if (collider.gameObject.CompareTag("RechargingArea"))
         {
             IsRecharging = true;
         }
     }
 
-    private void OnCollisionExit2D(Collision2D collision)
+    private void OnTriggerExit2D(Collider2D collider)
     {
-        if (collision.gameObject.CompareTag("RechargingArea"))
+        if (collider.gameObject.CompareTag("RechargingArea"))
         {
             IsRecharging = false;
         }

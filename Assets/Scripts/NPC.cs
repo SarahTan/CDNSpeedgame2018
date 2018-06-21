@@ -113,8 +113,8 @@ public class NPC : MonoBehaviour {
         // Add a force to the NPC to move it
         if(stateMachine.CurrentStateId == (int)Relationship.Friend)
         {
-            // Friends should tend towards the player
-            if (shouldFollowPlayer)
+            // Friends should tend towards the player when it's not recharging
+            if (shouldFollowPlayer && !Player.Instance.IsRecharging)
             {
                 shouldFollowPlayer = false;
                 rb.AddForce((Player.Instance.transform.position - transform.position).normalized * currentSpeed);
