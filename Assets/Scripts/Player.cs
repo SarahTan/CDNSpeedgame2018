@@ -16,7 +16,7 @@ public class Player : Singleton<Player> {
 
     #region Properties
 
-    public bool IsRecharging { get; private set; }
+    public bool IsInChurch { get; private set; }
 
     // Cache the main camera for perf reasons since we need to access it every frame
     // Unity calls Object.FindObjectWithTag("MainCamera") *every single time* you access Camera.main, which is ridiculous
@@ -54,7 +54,7 @@ public class Player : Singleton<Player> {
     {
         if (collider.gameObject.CompareTag("RechargingArea"))
         {
-            IsRecharging = true;
+            IsInChurch = true;
         }
     }
 
@@ -62,7 +62,7 @@ public class Player : Singleton<Player> {
     {
         if (collider.gameObject.CompareTag("RechargingArea"))
         {
-            IsRecharging = false;
+            IsInChurch = false;
         }
     }
 }

@@ -242,11 +242,7 @@ public class GameManager : Singleton<GameManager>
     {
         while (stateMachine.CurrentStateId == (int)GameState.GameRunning)
         {
-            if (Player.Instance.IsRecharging && CurrentEnergy < startingEnergy)
-            {
-                CurrentEnergy += (energyGainRate / 10f);
-            }
-            else if (!Player.Instance.IsRecharging)
+            if (!Player.Instance.IsInChurch || CurrentEnergy >= startingEnergy)
             {
                 CurrentEnergy -= (energyDrainRate / 10f);
             }

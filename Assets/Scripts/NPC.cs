@@ -114,7 +114,7 @@ public class NPC : MonoBehaviour {
         if(stateMachine.CurrentStateId == (int)Relationship.Friend)
         {
             // Friends should tend towards the player when it's not recharging
-            if (shouldFollowPlayer && !Player.Instance.IsRecharging)
+            if (shouldFollowPlayer && !Player.Instance.IsInChurch)
             {
                 shouldFollowPlayer = false;
                 rb.AddForce((Player.Instance.transform.position - transform.position).normalized * currentSpeed);
