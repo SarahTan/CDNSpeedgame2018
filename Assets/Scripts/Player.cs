@@ -9,6 +9,9 @@ public class Player : Singleton<Player> {
     [SerializeField]
     private float maxSpeed;
 
+    [SerializeField]
+    private Rigidbody2D rb;
+   
     #endregion
 
     #region Properties
@@ -42,9 +45,9 @@ public class Player : Singleton<Player> {
 
     #endregion
     
-    private void Update()
+    private void FixedUpdate()
     {
-        transform.position = Vector2.Lerp(transform.position, TargetPosition, Time.deltaTime * maxSpeed);
+        rb.MovePosition(Vector2.Lerp(transform.position, TargetPosition, Time.deltaTime * maxSpeed));
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
