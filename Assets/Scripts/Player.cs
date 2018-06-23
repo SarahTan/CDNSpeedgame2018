@@ -50,6 +50,15 @@ public class Player : Singleton<Player> {
         rb.MovePosition(Vector2.Lerp(transform.position, TargetPosition, Time.deltaTime * maxSpeed));
     }
 
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        var npc = collision.gameObject.GetComponent<NPC>();
+        if (npc != null)
+        {
+            npc.HitByPlayer();
+        }
+    }
+
     private void OnTriggerEnter2D(Collider2D collider)
     {
         if (collider.gameObject.CompareTag("RechargingArea"))

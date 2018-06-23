@@ -62,6 +62,10 @@ public class NPC : MonoBehaviour {
 
     private Vector2 savedVelocity = Vector2.zero;
 
+    // Each item represents the number of hits in that chain reaction
+    private static List<int> chainReactionHits = new List<int>();
+    private int currentChainReactionIndex = -1;
+
     #endregion
 
     #region Properties
@@ -125,52 +129,58 @@ public class NPC : MonoBehaviour {
         stateMachine.Update();
     }
 
-    private void OnCollisionEnter2D(Collision2D collision)
+    private void OnTriggerEnter2D(Collider2D otherCollider)
     {
-        if (collision.gameObject == Player.Instance.gameObject)
+        var npc = otherCollider.GetComponent<NPC>();
+        if (npc != null && currentChainReactionIndex != -1)
         {
-            // Colliding with the player as a stranger triggers a state change to acquaintance
-            if (stateMachine.CurrentStateId == (int)Relationship.Stranger)
+            npc.ChainReaction(currentChainReactionIndex);
+            if (stateMachine.CurrentStateId != (int)Relationship.ReceivingEncouragement)
             {
-                stateMachine.EnterState((int)Relationship.Acquaintance);                
+                currentChainReactionIndex = -1;
             }
-            else if(stateMachine.CurrentStateId == (int)Relationship.Friend)
-            {
-                if (Input.anyKey)
-                {
-                    if (Input.GetKey(associatedKey))
-                    {
-                        stateMachine.EnterState((int)Relationship.ReceivingEncouragement);
-                    }
-                    else
-                    {
-                        WrongActionEvent.SafeRaise(this);
-                        stateMachine.EnterState((int)Relationship.Acquaintance);
-                    }
-                }
-            }
-        }
-    }
-
-    private void OnTriggerEnter2D(Collider2D collision)
-    {
-        var npc = collision.GetComponent<NPC>();
-        if (npc != null)
-        {
-            npc.ChainReaction();
         }
     }
 
     #endregion
 
+    // Returns true if there was a state change
+    public void HitByPlayer()
+    {
+        // Colliding with the player as a stranger triggers a state change to acquaintance
+        if (stateMachine.CurrentStateId == (int)Relationship.Stranger)
+        {
+            stateMachine.EnterState((int)Relationship.Acquaintance);
+        }
+        else if(stateMachine.CurrentStateId == (int)Relationship.Friend)
+        {
+            if (Input.anyKey)
+            {
+                if (Input.GetKey(associatedKey))
+                {
+                    stateMachine.EnterState((int)Relationship.ReceivingEncouragement);
+                    currentChainReactionIndex = chainReactionHits.Count;
+                    chainReactionHits.Add(1);
+                }
+                else
+                {
+                    WrongActionEvent.SafeRaise(this);
+                    stateMachine.EnterState((int)Relationship.Acquaintance);
+                }
+            }
+        }
+    }
+
     #region States
 
-    private void ChainReaction()
+    private void ChainReaction(int index)
     {
         // Stranger, Aquaintance, Friend
         if(stateMachine.CurrentStateId <= 2)
         {
             stateMachine.EnterState(stateMachine.CurrentStateId + 1);
+            currentChainReactionIndex = index;
+            chainReactionHits[index]++;
         }
     }
 
@@ -294,6 +304,8 @@ public class NPC : MonoBehaviour {
 
     private void OnExitReceivingEncourgaementState(int previousStateId)
     {
+        currentChainReactionIndex = -1;
+
         rb.isKinematic = false;
 
         // Set to max speed because:
