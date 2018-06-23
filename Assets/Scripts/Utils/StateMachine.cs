@@ -19,6 +19,7 @@ public class StateMachine
     private Dictionary<int, State> states = new Dictionary<int, State>();
 
     private StateUpdate cachedStateOnUpdate;
+    private StateUpdate cachedStateOnFixedUpdate;
 
     #endregion
 
@@ -42,7 +43,7 @@ public class StateMachine
         RunStateTransition(defaultStateId);
     }
 
-    public void AddState(int stateId, StateTransition onEnter, StateTransition onExit, StateUpdate onUpdate)
+    public void AddState(int stateId, StateTransition onEnter, StateTransition onExit, StateUpdate onUpdate, StateUpdate onFixedUpdate)
     {
         if (!states.ContainsKey(stateId))
         {
@@ -50,7 +51,8 @@ public class StateMachine
             {
                 OnEnter = onEnter,
                 OnExit = onExit,
-                OnUpdate = onUpdate
+                OnUpdate = onUpdate,
+                OnFixedUpdate = onFixedUpdate
             });
         }
     }
@@ -65,6 +67,14 @@ public class StateMachine
         if (cachedStateOnUpdate != null)
         {
             cachedStateOnUpdate();
+        }
+    }
+
+    public void FixedUpdate()
+    {
+        if (cachedStateOnFixedUpdate != null)
+        {
+            cachedStateOnFixedUpdate();
         }
     }
 
@@ -107,8 +117,9 @@ public class StateMachine
         State nextState = GetState(CurrentStateId);
         if (nextState != null)
         {
-            // Cache the OnUpdate method so we don't have to keep getting it
+            // Cache the OnUpdate and OnFixedUpdate method so we don't have to keep getting it
             cachedStateOnUpdate = nextState.OnUpdate;
+            cachedStateOnFixedUpdate = nextState.OnFixedUpdate;
 
             // Call OnEnter
             var onEnter = nextState.OnEnter;
@@ -119,8 +130,9 @@ public class StateMachine
         }
         else
         {
-            // Clear the cached OnUpdate which might have been set for the previous state
+            // Clear the cached OnUpdate  and OnFixedUpdate which might have been set for the previous state
             cachedStateOnUpdate = null;
+            cachedStateOnFixedUpdate = null;
         }
                         
         // Broadcast the state change
@@ -137,6 +149,7 @@ public class StateMachine
         public StateTransition OnEnter = null;
         public StateTransition OnExit = null;
         public StateUpdate OnUpdate = null;
+        public StateUpdate OnFixedUpdate = null;
     }
 
     #endregion

@@ -88,12 +88,12 @@ public class NPC : MonoBehaviour {
     private void Awake()
     {
         // Add all the states to the state machine
-        stateMachine.AddState((int)Relationship.Stranger, OnEnterStrangerState, null, null);
-        stateMachine.AddState((int)Relationship.Acquaintance, OnEnterAcquaintanceState, null, OnUpdateAcquaintanceState);
-        stateMachine.AddState((int)Relationship.Friend, OnEnterFriendState, OnExitFriendState, null);
-        stateMachine.AddState((int)Relationship.ReceivingEncouragement, OnEnterReceivingEncourgaementState, OnExitReceivingEncourgaementState, OnUpdateReceivingEncourgaementState);
-        stateMachine.AddState((int)Relationship.CloseFriend, OnEnterCloseFriendState, null, null);
-        stateMachine.AddState((int)Relationship.Inactive, OnEnterInactiveState, null, null);
+        stateMachine.AddState((int)Relationship.Stranger, OnEnterStrangerState, null, null, OnFixedUpdateStrangerState);
+        stateMachine.AddState((int)Relationship.Acquaintance, OnEnterAcquaintanceState, null, OnUpdateAcquaintanceState, OnFixedUpdateAcquaintanceState);
+        stateMachine.AddState((int)Relationship.Friend, OnEnterFriendState, OnExitFriendState, null, OnFixedUpdateFriendState);
+        stateMachine.AddState((int)Relationship.ReceivingEncouragement, OnEnterReceivingEncourgaementState, OnExitReceivingEncourgaementState, OnUpdateReceivingEncourgaementState, null);
+        stateMachine.AddState((int)Relationship.CloseFriend, OnEnterCloseFriendState, null, null, OnFixedUpdateCloseFriendState);
+        stateMachine.AddState((int)Relationship.Inactive, OnEnterInactiveState, null, null, null);
 
         // Immediately deactivate it
         stateMachine.Initialize((int)Relationship.Inactive);
@@ -110,36 +110,8 @@ public class NPC : MonoBehaviour {
             nextDirectionChangeTime = GetNextDirectionChangeTime();
         }
 
-        // Add a force to the NPC to move it
-        if(stateMachine.CurrentStateId == (int)Relationship.Friend)
-        {
-            // Friends should tend towards the player when it's not recharging
-            if (shouldFollowPlayer && !Player.Instance.IsInChurch)
-            {
-                shouldFollowPlayer = false;
-                rb.AddForce((Player.Instance.transform.position - transform.position).normalized * currentSpeed);
-            }
-            else
-            {
-                shouldFollowPlayer = true;
-                rb.AddForce((currentDirection) * currentSpeed);
-            }
-        }
-        else if (stateMachine.CurrentStateId == (int)Relationship.CloseFriend)
-        {
-            // Use max speed as we want it to quickly get out of the screen to be recycled
-            rb.AddForce((currentDirection) * maxSpeed);
-
-            // Deactivate the NPC once it's no longer visible
-            if (!MainCamera.IsObjectVisible(spriteRenderer.bounds))
-            {
-                stateMachine.EnterState((int)Relationship.Inactive);
-            }
-        }
-        else if(stateMachine.CurrentStateId != (int)Relationship.ReceivingEncouragement)
-        {
-            rb.AddForce((currentDirection) * currentSpeed);
-        }
+        // Call each of the state's FixedUpdates
+        stateMachine.FixedUpdate();
 
         // Clamp the velocity
         if(rb.velocity.sqrMagnitude > maxSpeed * maxSpeed)
@@ -212,6 +184,8 @@ public class NPC : MonoBehaviour {
         stateMachine.EnterState((int)Relationship.Inactive);
     }
 
+    #region Stranger
+
     private void OnEnterStrangerState(int previousStateId)
     {
         if (previousStateId == (int)Relationship.Inactive)
@@ -227,6 +201,15 @@ public class NPC : MonoBehaviour {
             spriteRenderer.color = Color.white;
         }
     }
+
+    private void OnFixedUpdateStrangerState()
+    {
+        rb.AddForce((currentDirection) * currentSpeed);
+    }
+
+    #endregion
+
+    #region Acquaintance
 
     private void OnEnterAcquaintanceState(int previousStateId)
     {
@@ -244,6 +227,15 @@ public class NPC : MonoBehaviour {
             stateMachine.EnterState((int)Relationship.Friend);
         }
     }
+    
+    private void OnFixedUpdateAcquaintanceState()
+    {
+        rb.AddForce((currentDirection) * currentSpeed);
+    }
+
+    #endregion
+
+    #region Friend
 
     private void OnEnterFriendState(int previousStateId)
     {
@@ -258,6 +250,25 @@ public class NPC : MonoBehaviour {
     {
         textMesh.text = string.Empty;
     }
+
+    private void OnFixedUpdateFriendState()
+    {
+        // Friends should tend towards the player when it's not recharging
+        if (shouldFollowPlayer && !Player.Instance.IsInChurch)
+        {
+            shouldFollowPlayer = false;
+            rb.AddForce((Player.Instance.transform.position - transform.position).normalized * currentSpeed);
+        }
+        else
+        {
+            shouldFollowPlayer = true;
+            rb.AddForce((currentDirection) * currentSpeed);
+        }
+    }
+
+    #endregion
+
+    #region Receiving Encouragement
 
     private void OnEnterReceivingEncourgaementState(int previousStateId)
     {
@@ -292,6 +303,10 @@ public class NPC : MonoBehaviour {
         aoe.SetActive(false);
     }
 
+    #endregion
+
+    #region Close Friend
+
     private void OnEnterCloseFriendState(int previousStateId)
     {
         // Debug
@@ -302,7 +317,23 @@ public class NPC : MonoBehaviour {
 
         EnterCloseFriendStateEvent.SafeRaise(this);
     }
-    
+
+    private void OnFixedUpdateCloseFriendState()
+    {
+        // Use max speed as we want it to quickly get out of the screen to be recycled
+        rb.AddForce((currentDirection) * maxSpeed);
+
+        // Deactivate the NPC once it's no longer visible
+        if (!MainCamera.IsObjectVisible(spriteRenderer.bounds))
+        {
+            stateMachine.EnterState((int)Relationship.Inactive);
+        }
+    }
+
+    #endregion
+
+    #region Inactive
+
     private void OnEnterInactiveState(int previousStateId)
     {
         // Reset everything
@@ -312,6 +343,8 @@ public class NPC : MonoBehaviour {
 
         EnterInactiveStateEvent.SafeRaise(this);
     }
+
+    #endregion
 
     #endregion
 

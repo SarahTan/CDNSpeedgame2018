@@ -129,9 +129,9 @@ public class GameManager : Singleton<GameManager>
 
     private void Awake()
     {
-        stateMachine.AddState((int)GameState.PreGame, null, null, null);
-        stateMachine.AddState((int)GameState.GameRunning, OnEnterGameRunningState, null, null);
-        stateMachine.AddState((int)GameState.PostGame, OnEnterPostGameState, null, null);
+        stateMachine.AddState((int)GameState.PreGame, null, null, null, null);
+        stateMachine.AddState((int)GameState.GameRunning, OnEnterGameRunningState, null, null, null);
+        stateMachine.AddState((int)GameState.PostGame, OnEnterPostGameState, null, null, null);
 
         // Set up the spawning rect
         if (spawningRectMin != null && spawningRectMin != null)
