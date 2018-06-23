@@ -238,7 +238,8 @@ public class NPC : MonoBehaviour {
 
     private void OnUpdateAcquaintanceState()
     {
-        if(Time.time > nextStateTransitionTime)
+        // Only transition the state when the player can see it
+        if(Time.time > nextStateTransitionTime && MainCamera.IsObjectVisible(spriteRenderer.bounds))
         {
             stateMachine.EnterState((int)Relationship.Friend);
         }
