@@ -111,7 +111,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   NPCPrefab: {fileID: 114124410792829302, guid: c9e2dc8381a28144986da7350e340383,
     type: 2}
-  healthBar: {fileID: 0}
+  chainReactionPrefab: {fileID: 114118090141475902, guid: bfb83d03eba5a0d48a373d53514db3c5,
+    type: 2}
+  energyBar: {fileID: 0}
   gameOverScreen: {fileID: 0}
   gameOverText: {fileID: 0}
   maxNumberOfActiveNPCs: 50
@@ -119,6 +121,7 @@ MonoBehaviour:
   spawningRectMin: {fileID: 4934560494920722}
   spawningRectMax: {fileID: 4196251064975916}
   closeFriendEnergy: 1
+  wrongActionEnergy: 1
   energyToWin: 100
   energyDrainRate: 1
   energyGainRate: 10

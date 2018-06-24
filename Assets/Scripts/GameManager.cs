@@ -34,6 +34,8 @@ public class GameManager : Singleton<GameManager>
     [Header("References")]
     [SerializeField]
     private NPC NPCPrefab;
+    [SerializeField]
+    private ChainReaction chainReactionPrefab;
 
     [SerializeField]
     private Slider energyBar;
@@ -80,6 +82,9 @@ public class GameManager : Singleton<GameManager>
     private List<NPC> activeNPCs = new List<NPC>();
 
     private StateMachine stateMachine = new StateMachine();
+
+    // Each item represents the number of hits in that chain reaction
+    private List<ChainReaction> chainReactions = new List<ChainReaction>();
 
     #endregion
 
@@ -197,6 +202,32 @@ public class GameManager : Singleton<GameManager>
         NPC.EnterInactiveStateEvent -= OnNPCEnterInactiveState;
         NPC.EnterCloseFriendStateEvent -= OnNPCEnterCloseFriendState;
         NPC.WrongActionEvent += OnNPCWrongAction;
+    }
+
+    #endregion
+
+    #region Chain Reactions
+
+    // Returns the index of the current chain reaction
+    public int StartChainReaction(float duration, Vector2 position)
+    {
+        // Create the chain reaction
+        var chainReaction = Instantiate(chainReactionPrefab);
+        chainReaction.transform.position = new Vector3(Mathf.Clamp(position.x, -7f, 7f), Mathf.Clamp(position.y + 2f, -4f, 3.5f), -1f);
+
+        // Initialize it and add it to the list
+        chainReaction.Initialize(Time.time + duration);
+        chainReactions.Add(chainReaction);
+
+        return chainReactions.Count - 1;
+    }
+
+    public void AddToChainReaction(int index, float duration, bool isEncouraged)
+    {
+        if(chainReactions.Count > index)
+        {
+            chainReactions[index].AddHit(isEncouraged, 1, Time.time + duration);
+        }
     }
 
     #endregion

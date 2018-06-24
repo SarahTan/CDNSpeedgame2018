@@ -746,7 +746,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 114787812204727748, guid: 036b68364aae28747a7d7a0a26c215e4,
         type: 2}
-      propertyPath: healthBar
+      propertyPath: energyBar
       value: 
       objectReference: {fileID: 1379245999}
     - target: {fileID: 114787812204727748, guid: 036b68364aae28747a7d7a0a26c215e4,
@@ -759,16 +759,6 @@ Prefab:
       propertyPath: gameOverText
       value: 
       objectReference: {fileID: 1141751906}
-    - target: {fileID: 114787812204727748, guid: 036b68364aae28747a7d7a0a26c215e4,
-        type: 2}
-      propertyPath: energyBar
-      value: 
-      objectReference: {fileID: 1379245999}
-    - target: {fileID: 114787812204727748, guid: 036b68364aae28747a7d7a0a26c215e4,
-        type: 2}
-      propertyPath: wrongActionEnergy
-      value: 1
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 036b68364aae28747a7d7a0a26c215e4, type: 2}
   m_IsPrefabParent: 0
@@ -948,7 +938,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_UiScaleMode: 1
-  m_ReferencePixelsPerUnit: 100
+  m_ReferencePixelsPerUnit: 500
   m_ScaleFactor: 1
   m_ReferenceResolution: {x: 800, y: 600}
   m_ScreenMatchMode: 0

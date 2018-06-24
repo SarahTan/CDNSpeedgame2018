@@ -62,8 +62,6 @@ public class NPC : MonoBehaviour {
 
     private Vector2 savedVelocity = Vector2.zero;
 
-    // Each item represents the number of hits in that chain reaction
-    private static List<int> chainReactionHits = new List<int>();
     private int currentChainReactionIndex = -1;
 
     #endregion
@@ -159,8 +157,7 @@ public class NPC : MonoBehaviour {
                 if (Input.GetKey(associatedKey))
                 {
                     stateMachine.EnterState((int)Relationship.ReceivingEncouragement);
-                    currentChainReactionIndex = chainReactionHits.Count;
-                    chainReactionHits.Add(1);
+                    currentChainReactionIndex = GameManager.Instance.StartChainReaction(receivingEncouragementStateDuration, transform.position);
                 }
                 else
                 {
@@ -178,9 +175,10 @@ public class NPC : MonoBehaviour {
         // Stranger, Aquaintance, Friend
         if(stateMachine.CurrentStateId <= 2)
         {
-            stateMachine.EnterState(stateMachine.CurrentStateId + 1);
             currentChainReactionIndex = index;
-            chainReactionHits[index]++;
+            var nextStateId = stateMachine.CurrentStateId + 1;
+            GameManager.Instance.AddToChainReaction(currentChainReactionIndex, receivingEncouragementStateDuration, nextStateId == (int)Relationship.ReceivingEncouragement);
+            stateMachine.EnterState(nextStateId);
         }
     }
 
