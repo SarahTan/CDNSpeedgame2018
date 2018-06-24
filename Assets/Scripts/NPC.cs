@@ -8,7 +8,6 @@ public class NPC : MonoBehaviour {
     #region Events
 
     public static System.Action<NPC> EnterInactiveStateEvent = null;
-    public static System.Action<NPC> EnterCloseFriendStateEvent = null;
     public static System.Action<NPC> WrongActionEvent = null;
 
     #endregion
@@ -133,10 +132,6 @@ public class NPC : MonoBehaviour {
         if (npc != null && currentChainReactionIndex != -1)
         {
             npc.ChainReaction(currentChainReactionIndex);
-            if (stateMachine.CurrentStateId != (int)Relationship.ReceivingEncouragement)
-            {
-                currentChainReactionIndex = -1;
-            }
         }
     }
 
@@ -173,7 +168,7 @@ public class NPC : MonoBehaviour {
     private void ChainReaction(int index)
     {
         // Stranger, Aquaintance, Friend
-        if(stateMachine.CurrentStateId <= 2)
+        if(stateMachine.CurrentStateId <= 2 && index != currentChainReactionIndex)
         {
             currentChainReactionIndex = index;
             var nextStateId = stateMachine.CurrentStateId + 1;
@@ -302,8 +297,6 @@ public class NPC : MonoBehaviour {
 
     private void OnExitReceivingEncourgaementState(int previousStateId)
     {
-        currentChainReactionIndex = -1;
-
         rb.isKinematic = false;
 
         // Set to max speed because:
@@ -321,11 +314,6 @@ public class NPC : MonoBehaviour {
     {
         // Debug
         spriteRenderer.color = Color.green;
-
-        // Don't change the direction anymore so it will leave the screen
-        nextDirectionChangeTime = float.MaxValue;
-
-        EnterCloseFriendStateEvent.SafeRaise(this);
     }
 
     private void OnFixedUpdateCloseFriendState()

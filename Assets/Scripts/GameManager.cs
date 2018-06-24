@@ -62,7 +62,7 @@ public class GameManager : Singleton<GameManager>
 
     [Header("Energy")]
     [SerializeField]
-    private int closeFriendEnergy;
+    private int energyPerNPC;
     [SerializeField]
     private int wrongActionEnergy;
     [SerializeField]
@@ -73,6 +73,11 @@ public class GameManager : Singleton<GameManager>
     private float energyGainRate;
     [SerializeField]
     private float startingEnergy;
+
+    [SerializeField]
+    private float maxBonusCount;
+    [SerializeField]
+    private AnimationCurve energyBonusMultiplierCurve;
 
     #endregion
 
@@ -157,7 +162,6 @@ public class GameManager : Singleton<GameManager>
 
         // Listen for NPC events
         NPC.EnterInactiveStateEvent += OnNPCEnterInactiveState;
-        NPC.EnterCloseFriendStateEvent += OnNPCEnterCloseFriendState;
         NPC.WrongActionEvent += OnNPCWrongAction;
 
         stateMachine.EnterState((int)GameState.GameRunning);
@@ -200,7 +204,6 @@ public class GameManager : Singleton<GameManager>
         base.OnDestroy();
 
         NPC.EnterInactiveStateEvent -= OnNPCEnterInactiveState;
-        NPC.EnterCloseFriendStateEvent -= OnNPCEnterCloseFriendState;
         NPC.WrongActionEvent += OnNPCWrongAction;
     }
 
@@ -211,6 +214,9 @@ public class GameManager : Singleton<GameManager>
     // Returns the index of the current chain reaction
     public int StartChainReaction(float duration, Vector2 position)
     {
+        CurrentEnergy += energyPerNPC;
+        oldEnergy = energyPerNPC;
+
         // Create the chain reaction
         var chainReaction = Instantiate(chainReactionPrefab);
         chainReaction.transform.position = new Vector3(Mathf.Clamp(position.x, -7f, 7f), Mathf.Clamp(position.y + 2f, -4f, 3.5f), -1f);
@@ -222,14 +228,40 @@ public class GameManager : Singleton<GameManager>
         return chainReactions.Count - 1;
     }
 
+    private float oldEnergy = 0;
     public void AddToChainReaction(int index, float duration, bool isEncouraged)
     {
-        if(chainReactions.Count > index)
-        {
-            chainReactions[index].AddHit(isEncouraged, 1, Time.time + duration);
+        if(index >= 0 && chainReactions.Count > index)
+        {            
+            if (isEncouraged)
+            {
+                var encouragedCount = chainReactions[index].EncouragedCount + 1;
+
+                // Clamp and normalize the bonus count
+                var bonusCount = Mathf.Clamp(encouragedCount, 0, maxBonusCount) / maxBonusCount;
+                // Get the multiplier based on the count
+                var bonusMultiplier = energyBonusMultiplierCurve.Evaluate(bonusCount);
+
+                // Calculate the total bonus energy from this chain reaction so far
+                var totalBonusEnergy = (encouragedCount * energyPerNPC * Mathf.Clamp(bonusMultiplier, 0, 1));
+
+                // Calculate the total energy gained so far
+                var newEnergy = totalBonusEnergy + (encouragedCount * energyPerNPC);
+
+                // Add to CurrentEnergy
+                CurrentEnergy += (newEnergy - oldEnergy);
+                oldEnergy = newEnergy;
+
+                // Update the chain reaction
+                chainReactions[index].AddHit(true, totalBonusEnergy, Time.time + duration);
+            }
+            else
+            {
+                chainReactions[index].AddHit(false, -1, -1);
+            }
         }
     }
-
+    
     #endregion
 
     private void OnNPCWrongAction(NPC npc)
@@ -237,18 +269,6 @@ public class GameManager : Singleton<GameManager>
         if (activeNPCs.Contains(npc))
         {
             CurrentEnergy -= Mathf.Abs(wrongActionEnergy);
-        }
-        else
-        {
-            Debug.LogError(string.Format("{0} not found in activeNPC list!", npc.name));
-        }
-    }
-
-    private void OnNPCEnterCloseFriendState(NPC npc)
-    {
-        if (activeNPCs.Contains(npc))
-        {
-            CurrentEnergy += closeFriendEnergy;
         }
         else
         {

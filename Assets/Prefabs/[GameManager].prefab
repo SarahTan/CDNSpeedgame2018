@@ -120,9 +120,29 @@ MonoBehaviour:
   NPCSpawnFrequency: 0.5
   spawningRectMin: {fileID: 4934560494920722}
   spawningRectMax: {fileID: 4196251064975916}
-  closeFriendEnergy: 1
+  energyPerNPC: 1
   wrongActionEnergy: 1
   energyToWin: 100
   energyDrainRate: 1
   energyGainRate: 10
   startingEnergy: 50
+  maxBonusMultiplier: 2
+  maxBonusCount: 30
+  energyBonusMultiplierCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 2
+      time: 0.1
+      value: 0
+      inSlope: 2
+      outSlope: 2
+      tangentMode: 0
+    - serializedVersion: 2
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 0

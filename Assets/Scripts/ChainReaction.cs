@@ -10,25 +10,26 @@ public class ChainReaction : MonoBehaviour {
     [SerializeField]
     private TextMeshPro encouragedCountText;
     [SerializeField]
-    private TextMeshPro energyAddedText;
+    private TextMeshPro bonusEnergyText;
+    [SerializeField]
+    private GameObject bonusEnergySprite;
     
     [SerializeField]
-    private Animator animator;
-    
+    private Animator animator;    
 
-    private int energyAdded = 0;
     private float endTime = 0;
 
     public int HitCount { get; private set; }
     public int EncouragedCount { get; private set; }
+    public float BonusEnergy { get; private set; }
 
     private readonly int _ANIMATION_ID = Animator.StringToHash("");
-    
+
     public void Initialize(float endTime)
     {
         HitCount = 1;
         EncouragedCount = 1;
-        energyAdded = 1;
+        BonusEnergy = 0;
         this.endTime = endTime;
 
         UpdateText();
@@ -36,22 +37,23 @@ public class ChainReaction : MonoBehaviour {
         StartCoroutine(RunWaitForChainReactionEnd());
     }
 
-    public void AddHit(bool isEncouragement, int newEnergy, float newEndTime)
+    public void AddHit(bool isEncouraged, float newEnergy, float newEndTime)
     {
         HitCount++;
         // Animate
 
-        if (isEncouragement)
+        if (isEncouraged)
         {
             EncouragedCount++;
 
             // Animate
+
+            BonusEnergy = newEnergy;
+            // Animate
+
+            endTime = newEndTime;
         }
 
-        energyAdded = newEnergy;
-        // Animate
-
-        endTime = newEndTime;
         UpdateText();
     }
 
@@ -59,21 +61,28 @@ public class ChainReaction : MonoBehaviour {
     {
         hitCountText.text = string.Format("{0} hits!", HitCount);
         encouragedCountText.text = string.Format("Encouraged x {0}", EncouragedCount);
-        energyAddedText.text = string.Format("+ {0}", energyAdded);
+
+        if (Mathf.RoundToInt(BonusEnergy) > 0)
+        {
+            bonusEnergySprite.SetActive(true);
+            bonusEnergyText.gameObject.SetActive(true);
+            bonusEnergyText.text = string.Format("+ Bonus {0}", Mathf.RoundToInt(BonusEnergy));
+        }
+        else
+        {
+            bonusEnergySprite.SetActive(false);
+            bonusEnergyText.gameObject.SetActive(false);
+        }
     }
 
     private IEnumerator RunWaitForChainReactionEnd()
     {
-        Debug.LogError("endtime: " + endTime);
         while(Time.time < endTime)
         {
-            Debug.Log(Time.time);
             yield return null;
         }
-        Debug.LogError("destroyed: " + Time.time);
 
         // Animate out
-
         Destroy(gameObject);
     }
 }
