@@ -23,6 +23,8 @@ public class NPC : MonoBehaviour {
     private TextMesh textMesh;
     [SerializeField]
     private GameObject aoe;
+    [SerializeField]
+    private Animator animator;
 
     [Header("Movement Variables")]
     [SerializeField]
@@ -40,10 +42,7 @@ public class NPC : MonoBehaviour {
     private float minTimeBeforeFriendTransition;
     [SerializeField]
     private float maxTimeBeforeFriendTransition;
-
-    [SerializeField]
-    private float receivingEncouragementStateDuration;
-
+    
     [SerializeField]
     private KeyCode[] keys = new KeyCode[0];
 
@@ -51,7 +50,7 @@ public class NPC : MonoBehaviour {
     private float currentSpeed = 0f;
     private float nextDirectionChangeTime = 0f;
 
-    private float nextStateTransitionTime = 0f;
+    private float acquaintanceStateExitTime = 0f;
 
     private KeyCode associatedKey = KeyCode.None;
 
@@ -62,6 +61,12 @@ public class NPC : MonoBehaviour {
     private Vector2 savedVelocity = Vector2.zero;
 
     private int currentChainReactionIndex = -1;
+
+    #endregion
+
+    #region Animation
+
+    private static readonly int REALTIONSHIP_ANIMATION_ID = Animator.StringToHash("Relationship");
 
     #endregion
 
@@ -92,12 +97,25 @@ public class NPC : MonoBehaviour {
         stateMachine.AddState((int)Relationship.Stranger, OnEnterStrangerState, null, null, OnFixedUpdateStrangerState);
         stateMachine.AddState((int)Relationship.Acquaintance, OnEnterAcquaintanceState, null, OnUpdateAcquaintanceState, OnFixedUpdateAcquaintanceState);
         stateMachine.AddState((int)Relationship.Friend, OnEnterFriendState, OnExitFriendState, null, OnFixedUpdateFriendState);
-        stateMachine.AddState((int)Relationship.ReceivingEncouragement, OnEnterReceivingEncourgaementState, OnExitReceivingEncourgaementState, OnUpdateReceivingEncourgaementState, null);
-        stateMachine.AddState((int)Relationship.CloseFriend, OnEnterCloseFriendState, null, null, OnFixedUpdateCloseFriendState);
+        stateMachine.AddState((int)Relationship.ReceivingEncouragement, OnEnterReceivingEncourgaementState, OnExitReceivingEncourgaementState, null, null);
+        stateMachine.AddState((int)Relationship.CloseFriend, null, null, null, OnFixedUpdateCloseFriendState);
         stateMachine.AddState((int)Relationship.Inactive, OnEnterInactiveState, null, null, null);
+
+        // Listen for state changes so we can animate
+        stateMachine.StateChangeEvent += StateMachine_StateChangeEvent;
 
         // Immediately deactivate it
         stateMachine.Initialize((int)Relationship.Inactive);
+    }
+
+    private void OnDestroy()
+    {
+        stateMachine.StateChangeEvent -= StateMachine_StateChangeEvent;
+    }
+
+    private void StateMachine_StateChangeEvent(int currentStateId, int previousStateId)
+    {
+        animator.SetInteger(REALTIONSHIP_ANIMATION_ID, stateMachine.CurrentStateId);
     }
 
     // All physics calculations should always be done in FixedUpdate
@@ -152,7 +170,7 @@ public class NPC : MonoBehaviour {
                 if (Input.GetKey(associatedKey))
                 {
                     stateMachine.EnterState((int)Relationship.ReceivingEncouragement);
-                    currentChainReactionIndex = GameManager.Instance.StartChainReaction(receivingEncouragementStateDuration, transform.position);
+                    currentChainReactionIndex = GameManager.Instance.StartChainReaction(transform.position);
                 }
                 else
                 {
@@ -172,7 +190,7 @@ public class NPC : MonoBehaviour {
         {
             currentChainReactionIndex = index;
             var nextStateId = stateMachine.CurrentStateId + 1;
-            GameManager.Instance.AddToChainReaction(currentChainReactionIndex, receivingEncouragementStateDuration, nextStateId == (int)Relationship.ReceivingEncouragement);
+            GameManager.Instance.AddToChainReaction(currentChainReactionIndex, nextStateId == (int)Relationship.ReceivingEncouragement);
             stateMachine.EnterState(nextStateId);
         }
     }
@@ -199,9 +217,6 @@ public class NPC : MonoBehaviour {
             nextDirectionChangeTime = GetNextDirectionChangeTime();
             currentDirection = UnityExtensions.GetRandomUnitVector();
             currentSpeed = Random.Range(minSpeed, maxSpeed);
-
-            // Debug
-            spriteRenderer.color = Color.white;
         }
     }
 
@@ -216,16 +231,13 @@ public class NPC : MonoBehaviour {
 
     private void OnEnterAcquaintanceState(int previousStateId)
     {
-        // Debug
-        spriteRenderer.color = Color.black;
-
-        nextStateTransitionTime = Time.time + Random.Range(minTimeBeforeFriendTransition, maxTimeBeforeFriendTransition);
+        acquaintanceStateExitTime = Time.time + Random.Range(minTimeBeforeFriendTransition, maxTimeBeforeFriendTransition);
     }
 
     private void OnUpdateAcquaintanceState()
     {
         // Only transition the state when the player can see it
-        if(Time.time > nextStateTransitionTime && MainCamera.IsObjectVisible(spriteRenderer.bounds))
+        if(Time.time > acquaintanceStateExitTime && MainCamera.IsObjectVisible(spriteRenderer.bounds))
         {
             stateMachine.EnterState((int)Relationship.Friend);
         }
@@ -242,9 +254,6 @@ public class NPC : MonoBehaviour {
 
     private void OnEnterFriendState(int previousStateId)
     {
-        // Debug
-        spriteRenderer.color = Color.yellow;
-
         associatedKey = keys[Random.Range(0, keys.Length)];
         textMesh.text = associatedKey.ToString();
     }
@@ -275,24 +284,15 @@ public class NPC : MonoBehaviour {
 
     private void OnEnterReceivingEncourgaementState(int previousStateId)
     {
-        // Debug
-        spriteRenderer.color = Color.blue;
-
         // NPC pauses in place while receiving encouragement
         savedVelocity = rb.velocity;
         rb.velocity = Vector2.zero;
         rb.isKinematic = true;
-
-        nextStateTransitionTime = Time.time + receivingEncouragementStateDuration;
-        aoe.SetActive(true);
     }
 
-    private void OnUpdateReceivingEncourgaementState()
+    private void FinishedReceivingEncouragement()
     {
-        if (Time.time > nextStateTransitionTime)
-        {
-            stateMachine.EnterState((int)Relationship.CloseFriend);
-        }
+        stateMachine.EnterState((int)Relationship.CloseFriend);
     }
 
     private void OnExitReceivingEncourgaementState(int previousStateId)
@@ -309,12 +309,6 @@ public class NPC : MonoBehaviour {
     #endregion
 
     #region Close Friend
-
-    private void OnEnterCloseFriendState(int previousStateId)
-    {
-        // Debug
-        spriteRenderer.color = Color.green;
-    }
 
     private void OnFixedUpdateCloseFriendState()
     {

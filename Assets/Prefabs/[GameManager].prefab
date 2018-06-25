@@ -126,8 +126,7 @@ MonoBehaviour:
   energyDrainRate: 1
   energyGainRate: 10
   startingEnergy: 50
-  maxBonusMultiplier: 2
-  maxBonusCount: 30
+  maxBonusCount: 20
   energyBonusMultiplierCurve:
     serializedVersion: 2
     m_Curve:

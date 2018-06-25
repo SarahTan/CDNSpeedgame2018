@@ -212,7 +212,7 @@ public class GameManager : Singleton<GameManager>
     #region Chain Reactions
 
     // Returns the index of the current chain reaction
-    public int StartChainReaction(float duration, Vector2 position)
+    public int StartChainReaction(Vector2 position)
     {
         CurrentEnergy += energyPerNPC;
         oldEnergy = energyPerNPC;
@@ -222,14 +222,14 @@ public class GameManager : Singleton<GameManager>
         chainReaction.transform.position = new Vector3(Mathf.Clamp(position.x, -7f, 7f), Mathf.Clamp(position.y + 2f, -4f, 3.5f), -1f);
 
         // Initialize it and add it to the list
-        chainReaction.Initialize(Time.time + duration);
+        chainReaction.Initialize();
         chainReactions.Add(chainReaction);
 
         return chainReactions.Count - 1;
     }
 
     private float oldEnergy = 0;
-    public void AddToChainReaction(int index, float duration, bool isEncouraged)
+    public void AddToChainReaction(int index, bool isEncouraged)
     {
         if(index >= 0 && chainReactions.Count > index)
         {            
@@ -253,11 +253,11 @@ public class GameManager : Singleton<GameManager>
                 oldEnergy = newEnergy;
 
                 // Update the chain reaction
-                chainReactions[index].AddHit(true, totalBonusEnergy, Time.time + duration);
+                chainReactions[index].AddHit(true, totalBonusEnergy);
             }
             else
             {
-                chainReactions[index].AddHit(false, -1, -1);
+                chainReactions[index].AddHit(false, -1);
             }
         }
     }

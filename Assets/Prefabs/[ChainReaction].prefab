@@ -317,6 +317,7 @@ MonoBehaviour:
   bonusEnergyText: {fileID: 114879679602055186}
   bonusEnergySprite: {fileID: 1012026630418430}
   animator: {fileID: 95993670559922230}
+  visabilityDuration: 1
 --- !u!114 &114773653314752400
 MonoBehaviour:
   m_ObjectHideFlags: 1

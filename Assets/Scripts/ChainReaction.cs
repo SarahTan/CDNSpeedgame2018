@@ -15,7 +15,10 @@ public class ChainReaction : MonoBehaviour {
     private GameObject bonusEnergySprite;
     
     [SerializeField]
-    private Animator animator;    
+    private Animator animator;
+
+    [SerializeField]
+    private float visabilityDuration;
 
     private float endTime = 0;
 
@@ -23,21 +26,21 @@ public class ChainReaction : MonoBehaviour {
     public int EncouragedCount { get; private set; }
     public float BonusEnergy { get; private set; }
 
-    private readonly int _ANIMATION_ID = Animator.StringToHash("");
+    private static readonly int _ANIMATION_ID = Animator.StringToHash("");
 
-    public void Initialize(float endTime)
+    public void Initialize()
     {
         HitCount = 1;
         EncouragedCount = 1;
         BonusEnergy = 0;
-        this.endTime = endTime;
+        endTime = Time.time + visabilityDuration;
 
         UpdateText();
 
         StartCoroutine(RunWaitForChainReactionEnd());
     }
 
-    public void AddHit(bool isEncouraged, float newEnergy, float newEndTime)
+    public void AddHit(bool isEncouraged, float newEnergy)
     {
         HitCount++;
         // Animate
@@ -51,7 +54,7 @@ public class ChainReaction : MonoBehaviour {
             BonusEnergy = newEnergy;
             // Animate
 
-            endTime = newEndTime;
+            endTime = Time.time + visabilityDuration;
         }
 
         UpdateText();
