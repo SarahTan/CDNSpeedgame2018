@@ -54,6 +54,8 @@ public class NPC : MonoBehaviour {
     private float nextDirectionChangeTime = 0f;
 
     private float acquaintanceStateExitTime = 0f;
+    private float pauseMovementDuration = 0.5f;
+    private float pauseMovementEndTime = 0.5f;
 
     private KeyCode associatedKey = KeyCode.None;
 
@@ -70,6 +72,7 @@ public class NPC : MonoBehaviour {
     #region Animation
 
     private static readonly int REALTIONSHIP_ANIMATION_ID = Animator.StringToHash("Relationship");
+    private static readonly int REALTIONSHIP_CHANGE_ANIMATION_ID = Animator.StringToHash("RelationshipChange");
 
     #endregion
 
@@ -118,27 +121,49 @@ public class NPC : MonoBehaviour {
 
     private void StateMachine_StateChangeEvent(int currentStateId, int previousStateId)
     {
+        if (currentStateId != (int)Relationship.CloseFriend)
+        {
+            pauseMovementEndTime = Time.time + pauseMovementDuration;
+            animator.SetTrigger(REALTIONSHIP_CHANGE_ANIMATION_ID);
+        }
         animator.SetInteger(REALTIONSHIP_ANIMATION_ID, stateMachine.CurrentStateId);
     }
 
     // All physics calculations should always be done in FixedUpdate
     private void FixedUpdate()
     {
-        // Get the new direction
-        if (Time.time > nextDirectionChangeTime)
+        if (Time.time > pauseMovementEndTime)
         {
-            currentSpeed = Random.Range(minSpeed, maxSpeed);
-            currentDirection = UnityExtensions.GetRandomUnitVector();
-            nextDirectionChangeTime = GetNextDirectionChangeTime();
+            // Resume movement
+            if (rb.isKinematic)
+            {
+                rb.isKinematic = false;
+                rb.velocity = savedVelocity;
+            }
+
+            // Get the new direction
+            if (Time.time > nextDirectionChangeTime)
+            {
+                currentSpeed = Random.Range(minSpeed, maxSpeed);
+                currentDirection = UnityExtensions.GetRandomUnitVector();
+                nextDirectionChangeTime = GetNextDirectionChangeTime();
+            }
+
+            // Call each of the state's FixedUpdates
+            stateMachine.FixedUpdate();
+            
+            // Clamp the velocity
+            if(rb.velocity.sqrMagnitude > maxSpeed * maxSpeed)
+            {
+                rb.velocity = Vector2.ClampMagnitude(rb.velocity, maxSpeed);
+            }
         }
-
-        // Call each of the state's FixedUpdates
-        stateMachine.FixedUpdate();
-
-        // Clamp the velocity
-        if(rb.velocity.sqrMagnitude > maxSpeed * maxSpeed)
+        else
         {
-            rb.velocity = Vector2.ClampMagnitude(rb.velocity, maxSpeed);
+            // Pause movement
+            savedVelocity = rb.velocity;
+            rb.velocity = Vector2.zero;
+            rb.isKinematic = true;
         }
     }
 
@@ -158,7 +183,6 @@ public class NPC : MonoBehaviour {
 
     #endregion
 
-    // Returns true if there was a state change
     public void HitByPlayer()
     {
         // Colliding with the player as a stranger triggers a state change to acquaintance
@@ -185,7 +209,7 @@ public class NPC : MonoBehaviour {
     }
 
     #region States
-
+    
     private void ChainReaction(int index)
     {
         // Stranger, Aquaintance, Friend
@@ -290,9 +314,9 @@ public class NPC : MonoBehaviour {
     private void OnEnterReceivingEncourgaementState(int previousStateId)
     {
         // NPC pauses in place while receiving encouragement
-        savedVelocity = rb.velocity;
-        rb.velocity = Vector2.zero;
-        rb.isKinematic = true;
+        //savedVelocity = rb.velocity;
+        //rb.velocity = Vector2.zero;
+        //rb.isKinematic = true;
     }
 
     private void FinishedReceivingEncouragement()

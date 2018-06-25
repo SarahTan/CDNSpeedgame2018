@@ -86,6 +86,6 @@ public class ChainReaction : MonoBehaviour {
         }
 
         // Animate out
-        Destroy(gameObject);
+        gameObject.SetActive(false);
     }
 }
