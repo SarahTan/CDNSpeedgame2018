@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -45,7 +46,9 @@ public class GameManager : Singleton<GameManager>
     [SerializeField]
     private GameObject gameOverScreen;
     [SerializeField]
-    private Text gameOverText;
+    private TextMeshProUGUI gameOverText;
+    [SerializeField]
+    private TextMeshProUGUI statsCount;
 
     #endregion
 
@@ -94,6 +97,15 @@ public class GameManager : Singleton<GameManager>
 
     // Each item represents the number of hits in that chain reaction
     private List<ChainReaction> chainReactions = new List<ChainReaction>();
+
+    #region Stats
+
+    private float gameStartTime;
+    private int largestHitChain;
+    private int largestEncouragedChain;
+    private float timeSpentInChurch;
+
+    #endregion
 
     #endregion
 
@@ -181,6 +193,8 @@ public class GameManager : Singleton<GameManager>
 
     private void OnEnterGameRunningState(int previousState)
     {
+        gameStartTime = Time.time;
+
         CurrentEnergy = startingEnergy;
 
         gameOverScreen.SetActive(false);
@@ -209,6 +223,15 @@ public class GameManager : Singleton<GameManager>
         {
             gameOverText.text = "You Lose :(";
         }
+
+        var timeTaken = Time.time - gameStartTime;
+        statsCount.text = string.Format("{0}m {1}s\n{2}m {3}s\n{4} Hits\n{5} Encouraged",
+                                        (int)timeTaken/60,
+                                        (int)timeTaken%60,
+                                        (int)timeSpentInChurch/60,
+                                        (int)timeSpentInChurch%60, 
+                                        largestHitChain,
+                                        largestEncouragedChain);
     }
 
     protected override void OnDestroy()
@@ -266,10 +289,20 @@ public class GameManager : Singleton<GameManager>
 
                 // Update the chain reaction
                 chainReactions[index].AddHit(true, totalBonusEnergy);
+
+                if (chainReactions[index].EncouragedCount > largestEncouragedChain)
+                {
+                    largestEncouragedChain = chainReactions[index].EncouragedCount;
+                }
             }
             else
             {
                 chainReactions[index].AddHit(false, -1);
+            }
+
+            if(chainReactions[index].HitCount > largestHitChain)
+            {
+                largestHitChain = chainReactions[index].HitCount;
             }
         }
     }
@@ -310,6 +343,11 @@ public class GameManager : Singleton<GameManager>
                 CurrentEnergy -= (energyDrainRate / 10f);
             }
             energyBarAnimator.SetBool(IN_CHURCH_ANIMATION_ID, Player.Instance.IsInChurch);
+
+            if (Player.Instance.IsInChurch)
+            {
+                timeSpentInChurch += 0.1f;
+            }
 
             yield return new WaitForSeconds(0.1f);
         }
