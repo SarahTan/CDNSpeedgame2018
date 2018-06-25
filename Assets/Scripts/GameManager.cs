@@ -39,6 +39,8 @@ public class GameManager : Singleton<GameManager>
 
     [SerializeField]
     private Slider energyBar;
+    [SerializeField]
+    private Animator energyBarAnimator;
 
     [SerializeField]
     private GameObject gameOverScreen;
@@ -73,6 +75,8 @@ public class GameManager : Singleton<GameManager>
     private float energyGainRate;
     [SerializeField]
     private float startingEnergy;
+    [SerializeField]
+    private float lowEnergyThreshold;
 
     [SerializeField]
     private float maxBonusCount;
@@ -93,6 +97,13 @@ public class GameManager : Singleton<GameManager>
 
     #endregion
 
+    #region Animation
+
+    private static readonly int IN_CHURCH_ANIMATION_ID = Animator.StringToHash("InChurch");
+    private static readonly int ENERGY_LEVEL_ANIMATION_ID = Animator.StringToHash("EnergyLevel");
+
+    #endregion
+
     #region Properties
 
     private float _currentEnergy = -1;
@@ -104,6 +115,7 @@ public class GameManager : Singleton<GameManager>
             if(value != CurrentEnergy)
             {
                 _currentEnergy = value;
+                energyBarAnimator.SetInteger(ENERGY_LEVEL_ANIMATION_ID, (int)value);
 
                 if (value > energyToWin || value < 1)
                 {
@@ -297,6 +309,8 @@ public class GameManager : Singleton<GameManager>
             {
                 CurrentEnergy -= (energyDrainRate / 10f);
             }
+            energyBarAnimator.SetBool(IN_CHURCH_ANIMATION_ID, Player.Instance.IsInChurch);
+
             yield return new WaitForSeconds(0.1f);
         }
     }

@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using Relationship = GameManager.Relationship;
 
@@ -20,7 +21,9 @@ public class NPC : MonoBehaviour {
     [SerializeField]
     private Rigidbody2D rb;
     [SerializeField]
-    private TextMesh textMesh;
+    private GameObject keyVisual;
+    [SerializeField]
+    private TextMeshPro keyText;
     [SerializeField]
     private GameObject aoe;
     [SerializeField]
@@ -255,12 +258,14 @@ public class NPC : MonoBehaviour {
     private void OnEnterFriendState(int previousStateId)
     {
         associatedKey = keys[Random.Range(0, keys.Length)];
-        textMesh.text = associatedKey.ToString();
+        keyText.text = associatedKey.ToString();
+        keyVisual.SetActive(true);
     }
 
     private void OnExitFriendState(int previousStateId)
     {
-        textMesh.text = string.Empty;
+        keyText.text = string.Empty;
+        keyVisual.SetActive(false);
     }
 
     private void OnFixedUpdateFriendState()
@@ -303,7 +308,6 @@ public class NPC : MonoBehaviour {
         // 1. Velocity magnitude might be close to 0 and will take awhile to increase back up
         // 2. We want the NPC to quickly exit the screen and get recycled
         rb.velocity = savedVelocity.normalized*maxSpeed;
-        aoe.SetActive(false);
     }
 
     #endregion
@@ -330,7 +334,7 @@ public class NPC : MonoBehaviour {
     {
         // Reset everything
         gameObject.SetActive(false);
-        textMesh.text = string.Empty;
+        keyVisual.SetActive(false);
         aoe.SetActive(false);
 
         EnterInactiveStateEvent.SafeRaise(this);

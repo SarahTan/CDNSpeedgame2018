@@ -114,6 +114,7 @@ MonoBehaviour:
   chainReactionPrefab: {fileID: 114118090141475902, guid: bfb83d03eba5a0d48a373d53514db3c5,
     type: 2}
   energyBar: {fileID: 0}
+  energyBarAnimator: {fileID: 0}
   gameOverScreen: {fileID: 0}
   gameOverText: {fileID: 0}
   maxNumberOfActiveNPCs: 50
@@ -126,6 +127,7 @@ MonoBehaviour:
   energyDrainRate: 1
   energyGainRate: 10
   startingEnergy: 50
+  lowEnergyThreshold: 15
   maxBonusCount: 20
   energyBonusMultiplierCurve:
     serializedVersion: 2
