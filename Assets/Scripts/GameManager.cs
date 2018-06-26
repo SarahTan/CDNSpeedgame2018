@@ -193,6 +193,8 @@ public class GameManager : Singleton<GameManager>
 
     private void OnEnterGameRunningState(int previousState)
     {
+        AudioManager.Instance.StartBGM();
+
         gameStartTime = Time.time;
 
         CurrentEnergy = startingEnergy;
@@ -208,22 +210,18 @@ public class GameManager : Singleton<GameManager>
 
     private void OnEnterPostGameState(int previousState)
     {
-        while(activeNPCs.Last() != null)
+
+        while (activeNPCs.Last() != null)
         {
             activeNPCs.Last().Deactivate();
         }
 
         gameOverScreen.SetActive(true);
 
-        if (CurrentEnergy >= energyToWin)
-        {
-            gameOverText.text = "You Win!";
-        }
-        else
-        {
-            gameOverText.text = "You Lose :(";
-        }
-
+        var win = CurrentEnergy >= energyToWin;
+        AudioManager.Instance.PlayGameEndSFX(win);
+        gameOverText.text =  win ? "You Win!" : gameOverText.text = "You Lose :(";
+        
         var timeTaken = Time.time - gameStartTime;
         statsCount.text = string.Format("{0}m {1}s\n{2}m {3}s\n{4} Hits\n{5} Encouraged",
                                         (int)timeTaken/60,

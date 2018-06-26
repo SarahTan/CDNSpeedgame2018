@@ -36,24 +36,21 @@ public class ChainReaction : MonoBehaviour {
         endTime = Time.time + visabilityDuration;
 
         UpdateText();
+        AudioManager.Instance.PlayChainReactionPopSFX();
 
         StartCoroutine(RunWaitForChainReactionEnd());
     }
 
     public void AddHit(bool isEncouraged, float newEnergy)
     {
+        AudioManager.Instance.PlayChainReactionPopSFX();
+
         HitCount++;
-        // Animate
 
         if (isEncouraged)
         {
             EncouragedCount++;
-
-            // Animate
-
             BonusEnergy = newEnergy;
-            // Animate
-
             endTime = Time.time + visabilityDuration;
         }
 
@@ -80,12 +77,20 @@ public class ChainReaction : MonoBehaviour {
 
     private IEnumerator RunWaitForChainReactionEnd()
     {
-        while(Time.time < endTime)
+        while(Time.time < endTime - 0.3f)
         {
             yield return null;
         }
 
-        // Animate out
+        if (BonusEnergy > 0)
+        {
+            AudioManager.Instance.PlayChainReactionEndSFX();
+        }
+
+        while (Time.time < endTime)
+        {
+            yield return null;
+        }
         gameObject.SetActive(false);
     }
 }
